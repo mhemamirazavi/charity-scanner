@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پنل اپراتور دبیرخانه</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap');
+    body { font-family: 'Vazirmatn', sans-serif; background-color: #0f172a; }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen p-4 flex flex-col items-center">
+  <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl">
+    <h2 class="text-xl font-bold text-center mb-4 text-emerald-400">📲 اسکنر و ثبت داده‌های جشنواره</h2>
+    
+    <div id="reader" class="overflow-hidden rounded-xl border-2 border-dashed border-slate-700 mb-4 bg-slate-950"></div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs text-slate-400 mb-1">کد شرکت‌کننده:</label>
+        <input id="userId" type="number" placeholder="مثلاً: ۱۰۱" class="w-full p-3 rounded-lg bg-slate-800 border border-slate-700 text-white font-bold text-center text-lg focus:outline-none focus:border-emerald-500">
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="sendAction('CHECK_IN', 'گیت ورودی', 0)" class="p-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-sm">🟢 ثبت ورود</button>
+        <button onclick="sendAction('CHECK_OUT', 'گیت خروجی', 0)" class="p-3 bg-rose-600 hover:bg-rose-500 rounded-lg font-bold text-sm">🔴 ثبت خروج</button>
+      </div>
+
+      <div class="border-t border-slate-800 pt-3">
+        <span class="text-xs text-slate-400 font-semibold block mb-2">ثبت امتیاز سوله بازی:</span>
+        <div class="grid grid-cols-3 gap-2">
+          <button onclick="sendAction('GAME_SCORE', 'برد بازی', 10)" class="p-2 bg-amber-600 hover:bg-amber-500 rounded-lg text-xs font-bold">+۱۰ برد</button>
+          <button onclick="sendAction('GAME_SCORE', 'شرکت در بازی', 5)" class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold">+۵ شرکت</button>
+          <button onclick="sendAction('GAME_SCORE', 'چالش ویژه', 20)" class="p-2 bg-purple-600 hover:bg-purple-500 rounded-lg text-xs font-bold">+۲۰ ویژه</button>
+        </div>
+      </div>
+
+      <div id="status" class="text-center text-sm py-2 font-medium"></div>
+    </div>
+  </div>
+
+  <script>
+    // آدرس وب‌اپ گوگل که ساختی را اینجا بگذار (بین دو کوتیشن):
+    const SCRIPT_URL = "آhttps://script.google.com/macros/s/AKfycbyjaE7HiMKS9bQJYCm54GgTZl8ygDwm45P9xRRVvBJJllbnmU2taIRxWJyikBaStcfq/exec";
+
+    function onScanSuccess(decodedText) {
+      document.getElementById('userId').value = decodedText;
+      var status = document.getElementById('status');
+      status.className = 'text-center text-sm py-2 font-medium text-emerald-400';
+      status.innerText = 'کد ' + decodedText + ' با دوربین خوانده شد!';
+    }
+
+    var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } });
+    html5QrcodeScanner.render(onScanSuccess);
+
+    function sendAction(type, detail, value) {
+      var uid = document.getElementById('userId').value;
+      var status = document.getElementById('status');
+      if (!uid) {
+        status.className = 'text-center text-sm py-2 font-medium text-rose-400';
+        status.innerText = 'لطفاً ابتدا کد را وارد یا اسکن کنید!';
+        return;
+      }
+      status.className = 'text-center text-sm py-2 font-medium text-amber-400';
+      status.innerText = 'در حال ذخیره...';
+
+      fetch(SCRIPT_URL + '?action=record&userId=' + uid + '&type=' + type + '&detail=' + encodeURIComponent(detail) + '&value=' + value, {
+        method: 'GET',
+        mode: 'no-cors'
+      }).then(() => {
+        status.className = 'text-center text-sm py-2 font-medium text-emerald-400';
+        status.innerText = 'با موفقیت ثبت شد: ' + detail + ' برای کد ' + uid;
+      }).catch(err => {
+        status.className = 'text-center text-sm py-2 font-medium text-rose-400';
+        status.innerText = 'خطا در ثبت اطلاعات!';
+      });
+    }
+  </script>
+</body>
+</html>
