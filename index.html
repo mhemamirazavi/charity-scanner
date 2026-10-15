@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>پنل اپراتور دبیرخانه</title>
+  <title>اسکنر دبیرخانه جشنواره</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
@@ -42,14 +42,14 @@
   </div>
 
   <script>
-    // آدرس وب‌اپ گوگل که ساختی را اینجا بگذار (بین دو کوتیشن):
-    const SCRIPT_URL = "آhttps://script.google.com/macros/s/AKfycbyjaE7HiMKS9bQJYCm54GgTZl8ygDwm45P9xRRVvBJJllbnmU2taIRxWJyikBaStcfq/exec";
+    // آدرس وب‌اپ گوگل شیت خودت را دقیقاً بین این دو کوتیشن قرار بده:
+    const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
 
     function onScanSuccess(decodedText) {
       document.getElementById('userId').value = decodedText;
       var status = document.getElementById('status');
       status.className = 'text-center text-sm py-2 font-medium text-emerald-400';
-      status.innerText = 'کد ' + decodedText + ' با دوربین خوانده شد!';
+      status.innerText = 'کد ' + decodedText + ' با موفقیت خوانده شد!';
     }
 
     var html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } });
@@ -64,17 +64,17 @@
         return;
       }
       status.className = 'text-center text-sm py-2 font-medium text-amber-400';
-      status.innerText = 'در حال ذخیره...';
+      status.innerText = 'در حال ارسال به شیت...';
 
-      fetch(SCRIPT_URL + '?action=record&userId=' + uid + '&type=' + type + '&detail=' + encodeURIComponent(detail) + '&value=' + value, {
+      fetch(SCRIPT_URL + '?userId=' + uid + '&type=' + type + '&detail=' + encodeURIComponent(detail) + '&value=' + value, {
         method: 'GET',
         mode: 'no-cors'
-      }).then(() => {
+      }).then(function() {
         status.className = 'text-center text-sm py-2 font-medium text-emerald-400';
-        status.innerText = 'با موفقیت ثبت شد: ' + detail + ' برای کد ' + uid;
-      }).catch(err => {
+        status.innerText = 'ثبت شد: ' + detail + ' برای کد ' + uid;
+      }).catch(function(err) {
         status.className = 'text-center text-sm py-2 font-medium text-rose-400';
-        status.innerText = 'خطا در ثبت اطلاعات!';
+        status.innerText = 'خطا در ثبت!';
       });
     }
   </script>
