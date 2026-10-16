@@ -26,47 +26,53 @@
   </div>
 
   <script>
-    // آدرس وب‌اپ اسکریپت خودت را اینجا بگذار:
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwX54H4cyGMe44bCMWK-fMG34tUeih-n-IC1J9A6odOnIHaTYQQS0LMFueePNes1wCp/exec";
+    // آدرس وب‌اپ گوگل شیت خودت را اینجا بگذار:
+    const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+
+    // تابعی که پاسخ شیت را پردازش و رندر می‌کند
+    window.renderLeaderboard = function(users) {
+      let html = '';
+      if (!users || users.length === 0) {
+        html = '<div class="text-center text-slate-500 py-12">هنوز امتیازی ثبت نشده است!</div>';
+      } else {
+        users.forEach((u, idx) => {
+          let badge = 'bg-slate-800 text-slate-300';
+          let rankIcon = (idx + 1);
+          if (idx === 0) { badge = 'gold text-slate-950 font-black shadow-lg shadow-amber-500/20'; rankIcon = '🥇 ۱'; }
+          else if (idx === 1) { badge = 'silver text-slate-950 font-black'; rankIcon = '🥈 ۲'; }
+          else if (idx === 2) { badge = 'bronze text-white font-black'; rankIcon = '🥉 ۳'; }
+
+          html += `
+            <div class="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-md">
+              <div class="flex items-center gap-4">
+                <span class="w-12 h-12 flex items-center justify-center rounded-lg text-lg ${badge}">${rankIcon}</span>
+                <div>
+                  <div class="font-bold text-lg text-slate-100">${u.name}</div>
+                  <div class="text-xs text-slate-400">شناسه: #${u.id}</div>
+                </div>
+              </div>
+              <div class="text-2xl font-black text-amber-400">${u.score} <span class="text-xs font-normal text-slate-400">امتیاز</span></div>
+            </div>`;
+        });
+      }
+      document.getElementById('board').innerHTML = html;
+    };
 
     function fetchLeaderboard() {
-      fetch(SCRIPT_URL + '?action=get_leaderboard')
-        .then(response => response.json())
-        .then(users => {
-          let html = '';
-          if (!users || users.length === 0) {
-            html = '<div class="text-center text-slate-500 py-12">هنوز امتیازی ثبت نشده است!</div>';
-          } else {
-            users.forEach((u, idx) => {
-              let badge = 'bg-slate-800 text-slate-300';
-              let rankIcon = (idx + 1);
-              if (idx === 0) { badge = 'gold text-slate-950 font-black shadow-lg shadow-amber-500/20'; rankIcon = '🥇 ۱'; }
-              else if (idx === 1) { badge = 'silver text-slate-950 font-black'; rankIcon = '🥈 ۲'; }
-              else if (idx === 2) { badge = 'bronze text-white font-black'; rankIcon = '🥉 ۳'; }
+      // حذف اسکریپت قبلی در صورت وجود
+      const oldScript = document.getElementById('jsonp-script');
+      if (oldScript) oldScript.remove();
 
-              html += `
-                <div class="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-md">
-                  <div class="flex items-center gap-4">
-                    <span class="w-12 h-12 flex items-center justify-center rounded-lg text-lg ${badge}">${rankIcon}</span>
-                    <div>
-                      <div class="font-bold text-lg text-slate-100">${u.name}</div>
-                      <div class="text-xs text-slate-400">شناسه: #${u.id}</div>
-                    </div>
-                  </div>
-                  <div class="text-2xl font-black text-amber-400">${u.score} <span class="text-xs font-normal text-slate-400">امتیاز</span></div>
-                </div>`;
-            });
-          }
-          document.getElementById('board').innerHTML = html;
-        })
-        .catch(err => {
-          console.error("خطا در بارگذاری لیدربرد", err);
-        });
+      // فراخوانی داده‌ها بدون هیچ محدودیت مرورگری (JSONP)
+      const script = document.createElement('script');
+      script.id = 'jsonp-script';
+      script.src = SCRIPT_URL + '?action=get_leaderboard&callback=renderLeaderboard&t=' + new Date().getTime();
+      document.body.appendChild(script);
     }
 
-    // بارگذاری اولیه
+    // لود اولیه
     fetchLeaderboard();
-    // بروزرسانی خودکار هر ۵ ثانیه
+    // بروزرسانی خودکار هر ۵ ثانیه یک‌بار
     setInterval(fetchLeaderboard, 5000);
   </script>
 </body>
