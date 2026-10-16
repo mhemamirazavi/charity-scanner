@@ -37,7 +37,7 @@
   <div class="container">
     <header>
       <h1>🏆 جدول امتیازات زنده سوله بازی</h1>
-      <p>بروزرسانی مستقیم و لحظه‌ای از دبیرخانه</p>
+      <p>بروزرسانی مستقیم و لحظه‌ای</p>
     </header>
 
     <div id="board" class="list">
@@ -46,73 +46,77 @@
   </div>
 
   <script>
-    // شناسه اختصاصی دیتابیس شیت شما
     const SPREADSHEET_ID = '1WCahyRCTz6nAbZDBvtEOoDCr-v8mAWJzye5tHtOJ_2c';
     const SHEET_NAME = 'Users';
 
-    function loadLeaderboard() {
-      // استفاده از سرویس استاندارد Google Visualization بدون محدودیت CORB / CORS
-      const queryUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&t=${new Date().getTime()}`;
+    // تعریف آبجکت استاندارد گوگل برای دریافت بدون باگ داده‌ها
+    window.google = window.google || {};
+    google.visualization = google.visualization || {};
+    google.visualization.Query = {
+      setResponse: function(response) {
+        if (!response || !response.table || !response.table.rows) {
+          document.getElementById('board').innerHTML = '<div class="loading">اطلاعاتی یافت نشد!</div>';
+          return;
+        }
 
-      fetch(queryUrl)
-        .then(res => res.text())
-        .then(text => {
-          // استخراج بدنه JSON از خروجی گوگل
-          const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
-          const data = JSON.parse(jsonText);
-          const rows = data.table.rows;
+        const rows = response.table.rows;
+        let users = [];
 
-          let users = [];
-          rows.forEach(r => {
-            if (r.c && r.c[0] && r.c[0].v) {
-              const id = r.c[0].v;
-              const name = (r.c[1] && r.c[1].v) ? r.c[1].v : ('شرکت‌کننده ' + id);
-              const score = (r.c[2] && !isNaN(r.c[2].v)) ? Number(r.c[2].v) : 0;
-              users.push({ id, name, score });
-            }
-          });
-
-          // مرتب‌سازی نزولی بر اساس بیشترین امتیاز
-          users.sort((a, b) => b.score - a.score);
-          const topUsers = users.slice(0, 10);
-
-          let html = '';
-          if (topUsers.length === 0) {
-            html = '<div class="loading">اطلاعاتی یافت نشد!</div>';
-          } else {
-            topUsers.forEach((u, idx) => {
-              let badgeClass = '';
-              let badgeIcon = (idx + 1);
-              if (idx === 0) { badgeClass = 'rank-1'; badgeIcon = '🥇 ۱'; }
-              else if (idx === 1) { badgeClass = 'rank-2'; badgeIcon = '🥈 ۲'; }
-              else if (idx === 2) { badgeClass = 'rank-3'; badgeIcon = '🥉 ۳'; }
-
-              html += `
-                <div class="card">
-                  <div class="left-side">
-                    <div class="rank-badge ${badgeClass}">${badgeIcon}</div>
-                    <div>
-                      <div class="name">${u.name}</div>
-                      <div class="uid">شناسه: #${u.id}</div>
-                    </div>
-                  </div>
-                  <div class="score">${u.score} <span>امتیاز</span></div>
-                </div>
-              `;
-            });
+        rows.forEach(r => {
+          if (r.c && r.c[0] && r.c[0].v !== null) {
+            const id = r.c[0].v;
+            // اگر نام خالی بود، شناسه را نمایش بده
+            const name = (r.c[1] && r.c[1].v) ? r.c[1].v : ('شرکت‌کننده ' + id);
+            const score = (r.c[2] && r.c[2].v !== null && !isNaN(r.c[2].v)) ? Number(r.c[2].v) : 0;
+            users.push({ id, name, score });
           }
-          document.getElementById('board').innerHTML = html;
-        })
-        .catch(err => {
-          console.error("خطا در بارگذاری شیت:", err);
-          document.getElementById('board').innerHTML = '<div class="loading">خطا در برقراری ارتباط با شیت. لطفاً دسترسی Share شیت را بررسی کنید.</div>';
         });
+
+        // مرتب‌سازی نزولی بر اساس بیشترین امتیاز
+        users.sort((a, b) => b.score - a.score);
+        const topUsers = users.slice(0, 10);
+
+        let html = '';
+        if (topUsers.length === 0) {
+          html = '<div class="loading">هیچ شرکت‌کننده‌ای یافت نشد!</div>';
+        } else {
+          topUsers.forEach((u, idx) => {
+            let badgeClass = '';
+            let badgeIcon = (idx + 1);
+            if (idx === 0) { badgeClass = 'rank-1'; badgeIcon = '🥇 ۱'; }
+            else if (idx === 1) { badgeClass = 'rank-2'; badgeIcon = '🥈 ۲'; }
+            else if (idx === 2) { badgeClass = 'rank-3'; badgeIcon = '🥉 ۳'; }
+
+            html += `
+              <div class="card">
+                <div class="left-side">
+                  <div class="rank-badge ${badgeClass}">${badgeIcon}</div>
+                  <div>
+                    <div class="name">${u.name}</div>
+                    <div class="uid">شناسه: #${u.id}</div>
+                  </div>
+                </div>
+                <div class="score">${u.score} <span>امتیاز</span></div>
+              </div>
+            `;
+          });
+        }
+        document.getElementById('board').innerHTML = html;
+      }
+    };
+
+    function refreshData() {
+      const oldScript = document.getElementById('gviz-script');
+      if (oldScript) oldScript.remove();
+
+      const script = document.createElement('script');
+      script.id = 'gviz-script';
+      script.src = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?sheet=${SHEET_NAME}&t=${Date.now()}`;
+      document.body.appendChild(script);
     }
 
-    // لود اولیه
-    loadLeaderboard();
-    // بروزرسانی خودکار هر ۵ ثانیه
-    setInterval(loadLeaderboard, 5000);
+    refreshData();
+    setInterval(refreshData, 5000);
   </script>
 </body>
 </html>
