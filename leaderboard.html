@@ -3,77 +3,116 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>لیدربرد زنده جشنواره</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>لیدربرد زنده رویداد خیریه</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
-    body { font-family: 'Vazirmatn', sans-serif; background-color: #0b0f19; }
-    .gold { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .silver { background: linear-gradient(135deg, #9ca3af, #6b7280); }
-    .bronze { background: linear-gradient(135deg, #b45309, #78350f); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
+    body { background-color: #0b0f19; color: #ffffff; display: flex; justify-content: center; min-height: 100vh; padding: 24px; }
+    .container { width: 100%; max-width: 760px; }
+    header { text-align: center; margin-bottom: 28px; }
+    h1 { color: #f59e0b; font-size: 2.2rem; font-weight: 900; margin-bottom: 8px; }
+    p { color: #94a3b8; font-size: 0.9rem; }
+    .list { display: flex; flex-direction: column; gap: 12px; }
+    .card {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #111827; border: 1px solid #1f2937; border-radius: 14px;
+      padding: 16px 20px; transition: all 0.3s ease;
+    }
+    .left-side { display: flex; align-items: center; gap: 16px; }
+    .rank-badge {
+      width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+      border-radius: 10px; font-weight: 900; font-size: 1.1rem; background: #1e293b; color: #cbd5e1;
+    }
+    .rank-1 { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+    .rank-2 { background: linear-gradient(135deg, #94a3b8, #64748b); color: #000; }
+    .rank-3 { background: linear-gradient(135deg, #b45309, #78350f); color: #fff; }
+    .name { font-weight: 700; font-size: 1.15rem; color: #f1f5f9; }
+    .uid { font-size: 0.8rem; color: #64748b; margin-top: 2px; }
+    .score { font-size: 1.6rem; font-weight: 900; color: #f59e0b; }
+    .score span { font-size: 0.85rem; font-weight: 400; color: #94a3b8; }
+    .loading { text-align: center; color: #64748b; padding: 40px; }
   </style>
 </head>
-<body class="text-white min-h-screen p-6 flex flex-col items-center">
-  <div class="w-full max-w-3xl">
-    <header class="text-center mb-8">
-      <h1 class="text-4xl font-black text-amber-400 tracking-wide drop-shadow-md">🏆 جدول امتیازات زنده سوله بازی</h1>
-      <p class="text-slate-400 mt-2 text-sm">بروزرسانی خودکار و لحظه‌ای</p>
+<body>
+  <div class="container">
+    <header>
+      <h1>🏆 جدول امتیازات زنده سوله بازی</h1>
+      <p>بروزرسانی مستقیم و لحظه‌ای از دبیرخانه</p>
     </header>
 
-    <div id="board" class="space-y-3">
-      <div class="text-center text-slate-500 py-12">در حال بارگذاری امتیازات...</div>
+    <div id="board" class="list">
+      <div class="loading">در حال فراخوانی داده‌ها از شیت...</div>
     </div>
   </div>
 
   <script>
-    // آدرس وب‌اپ گوگل شیت خودت را اینجا بگذار:
-    const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec";
+    // شناسه اختصاصی دیتابیس شیت شما
+    const SPREADSHEET_ID = '1WCahyRCTz6nAbZDBvtEOoDCr-v8mAWJzye5tHtOJ_2c';
+    const SHEET_NAME = 'Users';
 
-    // تابعی که پاسخ شیت را پردازش و رندر می‌کند
-    window.renderLeaderboard = function(users) {
-      let html = '';
-      if (!users || users.length === 0) {
-        html = '<div class="text-center text-slate-500 py-12">هنوز امتیازی ثبت نشده است!</div>';
-      } else {
-        users.forEach((u, idx) => {
-          let badge = 'bg-slate-800 text-slate-300';
-          let rankIcon = (idx + 1);
-          if (idx === 0) { badge = 'gold text-slate-950 font-black shadow-lg shadow-amber-500/20'; rankIcon = '🥇 ۱'; }
-          else if (idx === 1) { badge = 'silver text-slate-950 font-black'; rankIcon = '🥈 ۲'; }
-          else if (idx === 2) { badge = 'bronze text-white font-black'; rankIcon = '🥉 ۳'; }
+    function loadLeaderboard() {
+      // استفاده از سرویس استاندارد Google Visualization بدون محدودیت CORB / CORS
+      const queryUrl = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/tq?tqx=out:json&sheet=${SHEET_NAME}&t=${new Date().getTime()}`;
 
-          html += `
-            <div class="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800 shadow-md">
-              <div class="flex items-center gap-4">
-                <span class="w-12 h-12 flex items-center justify-center rounded-lg text-lg ${badge}">${rankIcon}</span>
-                <div>
-                  <div class="font-bold text-lg text-slate-100">${u.name}</div>
-                  <div class="text-xs text-slate-400">شناسه: #${u.id}</div>
+      fetch(queryUrl)
+        .then(res => res.text())
+        .then(text => {
+          // استخراج بدنه JSON از خروجی گوگل
+          const jsonText = text.substring(text.indexOf('{'), text.lastIndexOf('}') + 1);
+          const data = JSON.parse(jsonText);
+          const rows = data.table.rows;
+
+          let users = [];
+          rows.forEach(r => {
+            if (r.c && r.c[0] && r.c[0].v) {
+              const id = r.c[0].v;
+              const name = (r.c[1] && r.c[1].v) ? r.c[1].v : ('شرکت‌کننده ' + id);
+              const score = (r.c[2] && !isNaN(r.c[2].v)) ? Number(r.c[2].v) : 0;
+              users.push({ id, name, score });
+            }
+          });
+
+          // مرتب‌سازی نزولی بر اساس بیشترین امتیاز
+          users.sort((a, b) => b.score - a.score);
+          const topUsers = users.slice(0, 10);
+
+          let html = '';
+          if (topUsers.length === 0) {
+            html = '<div class="loading">اطلاعاتی یافت نشد!</div>';
+          } else {
+            topUsers.forEach((u, idx) => {
+              let badgeClass = '';
+              let badgeIcon = (idx + 1);
+              if (idx === 0) { badgeClass = 'rank-1'; badgeIcon = '🥇 ۱'; }
+              else if (idx === 1) { badgeClass = 'rank-2'; badgeIcon = '🥈 ۲'; }
+              else if (idx === 2) { badgeClass = 'rank-3'; badgeIcon = '🥉 ۳'; }
+
+              html += `
+                <div class="card">
+                  <div class="left-side">
+                    <div class="rank-badge ${badgeClass}">${badgeIcon}</div>
+                    <div>
+                      <div class="name">${u.name}</div>
+                      <div class="uid">شناسه: #${u.id}</div>
+                    </div>
+                  </div>
+                  <div class="score">${u.score} <span>امتیاز</span></div>
                 </div>
-              </div>
-              <div class="text-2xl font-black text-amber-400">${u.score} <span class="text-xs font-normal text-slate-400">امتیاز</span></div>
-            </div>`;
+              `;
+            });
+          }
+          document.getElementById('board').innerHTML = html;
+        })
+        .catch(err => {
+          console.error("خطا در بارگذاری شیت:", err);
+          document.getElementById('board').innerHTML = '<div class="loading">خطا در برقراری ارتباط با شیت. لطفاً دسترسی Share شیت را بررسی کنید.</div>';
         });
-      }
-      document.getElementById('board').innerHTML = html;
-    };
-
-    function fetchLeaderboard() {
-      // حذف اسکریپت قبلی در صورت وجود
-      const oldScript = document.getElementById('jsonp-script');
-      if (oldScript) oldScript.remove();
-
-      // فراخوانی داده‌ها بدون هیچ محدودیت مرورگری (JSONP)
-      const script = document.createElement('script');
-      script.id = 'jsonp-script';
-      script.src = SCRIPT_URL + '?action=get_leaderboard&callback=renderLeaderboard&t=' + new Date().getTime();
-      document.body.appendChild(script);
     }
 
     // لود اولیه
-    fetchLeaderboard();
-    // بروزرسانی خودکار هر ۵ ثانیه یک‌بار
-    setInterval(fetchLeaderboard, 5000);
+    loadLeaderboard();
+    // بروزرسانی خودکار هر ۵ ثانیه
+    setInterval(loadLeaderboard, 5000);
   </script>
 </body>
 </html>
