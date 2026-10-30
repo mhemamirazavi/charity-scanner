@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>پنل جامع اپراتورهای جشنواره</title>
+  <title>پنل جامع و صندوق جشنواره</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
     body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; padding: 16px; display: flex; flex-direction: column; align-items: center; }
-    .card { width: 100%; max-width: 450px; background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+    .card { width: 100%; max-width: 480px; background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
     h2 { text-align: center; color: #38bdf8; font-size: 1.25rem; margin-bottom: 14px; font-weight: 800; }
     #reader { border-radius: 12px; overflow: hidden; border: 2px dashed #475569; margin-bottom: 14px; background: #0b0f19; }
     
@@ -17,20 +17,22 @@
     input, select { width: 100%; padding: 11px; border-radius: 10px; background: #0f172a; border: 1px solid #475569; color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 12px; outline: none; }
     input:focus, select:focus { border-color: #38bdf8; }
     
-    .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
-    .tab-btn { background: transparent; border: none; color: #94a3b8; font-size: 0.75rem; font-weight: 700; padding: 8px 4px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+    .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
+    .tab-btn { background: transparent; border: none; color: #94a3b8; font-size: 0.7rem; font-weight: 700; padding: 8px 2px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
     .tab-btn.active { background: #38bdf8; color: #0f172a; font-weight: 900; }
 
     .section-panel { display: none; }
     .section-panel.active { display: block; }
+    .price-box { border-right: 3px solid #38bdf8; padding-right: 10px; margin-bottom: 10px; }
 
     .btn-grid { display: grid; gap: 8px; }
     .grid-2 { grid-template-columns: 1fr 1fr; }
     .grid-3 { grid-template-columns: repeat(3, 1fr); }
 
-    button.action-btn { border: none; border-radius: 10px; padding: 12px 6px; font-weight: 700; cursor: pointer; color: #fff; font-size: 0.85rem; transition: 0.15s; }
+    button.action-btn { border: none; border-radius: 10px; padding: 12px 6px; font-weight: 700; cursor: pointer; color: #fff; font-size: 0.85rem; transition: 0.15s; width: 100%; }
     button.action-btn:active { transform: scale(0.97); }
 
+    .btn-green { background: #10b981; }
     .btn-gate-in { background: #2563eb; }
     .btn-gate-out { background: #e11d48; }
     .btn-game-win { background: #d97706; }
@@ -39,7 +41,7 @@
     .btn-food { background: #059669; }
     .btn-booth { background: #0284c7; }
 
-    .status { text-align: center; font-size: 0.88rem; margin-top: 14px; padding: 10px; border-radius: 8px; font-weight: 600; min-height: 40px; }
+    .status { text-align: center; font-size: 0.9rem; margin-top: 14px; padding: 10px; border-radius: 8px; font-weight: 600; min-height: 40px; }
     .success { background: rgba(52, 211, 153, 0.15); color: #34d399; }
     .error { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
     .loading { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
@@ -48,83 +50,90 @@
 <body>
 
   <div class="card">
-    <h2>🎪 پنل ثبت اطلاعات جشنواره</h2>
+    <h2>🎪 پنل اپراتور و صندوق جشنواره</h2>
 
     <div id="reader"></div>
 
     <label>کد شرکت‌کننده:</label>
-    <input id="userId" type="number" placeholder="کد ۳ رقمی (مثلاً ۱۰۱)">
+    <input id="userId" type="number" placeholder="کد را اسکن یا تایپ کنید">
 
-    <!-- منوی انتخاب بخش -->
+    <!-- تب‌ها -->
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('gate')">🚪 گیت</button>
+      <button class="tab-btn" onclick="switchTab('bank')">💳 صندوق</button>
       <button class="tab-btn" onclick="switchTab('game')">🎮 بازی</button>
       <button class="tab-btn" onclick="switchTab('food')">☕ کافه</button>
       <button class="tab-btn" onclick="switchTab('booth')">🛍️ غرفه</button>
     </div>
 
-    <!-- ۱. پنل گیت تردد -->
+    <!-- ۱. گیت -->
     <div id="panel-gate" class="section-panel active">
       <div class="btn-grid grid-2">
-        <button onclick="sendAction('GATE', 'ورود به جشنواره', 0)" class="action-btn btn-gate-in">🟢 ثبت ورود</button>
-        <button onclick="sendAction('GATE', 'خروج از جشنواره', 0)" class="action-btn btn-gate-out">🔴 ثبت خروج</button>
+        <button onclick="sendRequest('CHECK_IN', 'ورود به جشنواره', 0, null)" class="action-btn btn-gate-in">🟢 ثبت ورود</button>
+        <button onclick="sendRequest('CHECK_OUT', 'خروج از جشنواره', 0, null)" class="action-btn btn-gate-out">🔴 ثبت خروج</button>
       </div>
     </div>
 
-    <!-- ۲. پنل سوله بازی -->
+    <!-- ۲. صندوق (افزایش اعتبار) -->
+    <div id="panel-bank" class="section-panel">
+      <div class="price-box">
+        <label>مبلغ پرداختی برای شارژ کارت (تومان):</label>
+        <input id="chargeAmount" type="number" placeholder="مثلاً: 50000">
+      </div>
+      <button onclick="sendRequest('BANK', 'شارژ حساب در صندوق', 0, 'chargeAmount')" class="action-btn btn-green">💳 افزایش موجودی کارت</button>
+    </div>
+
+    <!-- ۳. سوله بازی -->
     <div id="panel-game" class="section-panel">
       <label>انتخاب بازی:</label>
       <select id="gameDetail">
         <option value="فیفا / فوتبال دیجیتال">فیفا / فوتبال دیجیتال</option>
         <option value="بردگیم و فکری">بردگیم و بازی فکری</option>
         <option value="چالش واقعیت مجازی VR">چالش واقعیت مجازی VR</option>
-        <option value="مسابقه تیراندازی / دارت">مسابقه تیراندازی / دارت</option>
       </select>
+      <div class="price-box">
+        <label>هزینه ورودی بازی (کسر از حساب):</label>
+        <input id="gameCost" type="number" placeholder="رایگان یا مبلغ">
+      </div>
       <div class="btn-grid grid-3">
-        <button onclick="sendAction('GAME_SCORE', document.getElementById('gameDetail').value + ' (برد)', 10)" class="action-btn btn-game-win">+۱۰ برد</button>
-        <button onclick="sendAction('GAME_SCORE', document.getElementById('gameDetail').value + ' (شرکت)', 5)" class="action-btn btn-game-play">+۵ شرکت</button>
-        <button onclick="sendAction('GAME_SCORE', document.getElementById('gameDetail').value + ' (ویژه)', 20)" class="action-btn btn-game-special">+۲۰ چالش</button>
+        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (برد)', 10, 'gameCost')" class="action-btn btn-game-win">+۱۰ برد</button>
+        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (شرکت)', 5, 'gameCost')" class="action-btn btn-game-play">+۵ شرکت</button>
+        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (ویژه)', 20, 'gameCost')" class="action-btn btn-game-special">+۲۰ ویژه</button>
       </div>
     </div>
 
-    <!-- ۳. پنل کافه و رستوران -->
+    <!-- ۴. کافه و رستوران -->
     <div id="panel-food" class="section-panel">
       <label>سفارش کافه / غذا:</label>
-      <select id="foodDetail">
-        <option value="کافه - نوشیدنی گرم / قهوه">☕ نوشیدنی گرم / قهوه</option>
-        <option value="کافه - نوشیدنی سرد / آبمیوه">🧃 نوشیدنی سرد / آبمیوه</option>
-        <option value="کافه - کیک و شیرینی">🍩 کیک و شیرینی</option>
-        <option value="رستوران - وعده ناهار / ساندویچ">🥪 وعده اصلی / ناهار</option>
-      </select>
-      <div class="btn-grid">
-        <button onclick="sendAction('FOOD', document.getElementById('foodDetail').value, 1)" class="action-btn btn-food">☕ ثبت سفارش کافه/غذا</button>
+      <input id="foodDetail" type="text" placeholder="مثلاً: قهوه و کیک">
+      <div class="price-box">
+        <label>مبلغ سفارش (کسر از حساب):</label>
+        <input id="foodCost" type="number" placeholder="تومان">
       </div>
+      <button onclick="sendRequest('FOOD', document.getElementById('foodDetail').value, 0, 'foodCost')" class="action-btn btn-food">☕ پرداخت سفارش کافه</button>
     </div>
 
-    <!-- ۴. پنل غرفه‌ها -->
+    <!-- ۵. غرفه‌ها -->
     <div id="panel-booth" class="section-panel">
-      <label>انتخاب غرفه:</label>
-      <select id="boothDetail">
-        <option value="غرفه ۱ - دست‌سازه‌ها و هنر">غرفه ۱ - دست‌سازه‌ها و هنر</option>
-        <option value="غرفه ۲ - کتاب و محصولات فرهنگی">غرفه ۲ - کتاب و فرهنگی</option>
-        <option value="غرفه ۳ - صنایع‌دستی خیریه">غرفه ۳ - صنایع‌دستی خیریه</option>
-        <option value="غرفه ۴ - گل و گیاه">غرفه ۴ - گل و گیاه</option>
-      </select>
-      <div class="btn-grid">
-        <button onclick="sendAction('BOOTH', document.getElementById('boothDetail').value, 1)" class="action-btn btn-booth">🛍️ ثبت خرید / تعامل غرفه</button>
+      <label>کالا یا نام غرفه:</label>
+      <input id="boothDetail" type="text" placeholder="مثلاً: خرید صنایع دستی غرفه ۱">
+      <div class="price-box">
+        <label>مبلغ خرید (کسر از حساب):</label>
+        <input id="boothCost" type="number" placeholder="تومان">
       </div>
+      <button onclick="sendRequest('BOOTH', document.getElementById('boothDetail').value, 0, 'boothCost')" class="action-btn btn-booth">🛍️ پرداخت خرید غرفه</button>
     </div>
 
     <div id="status" class="status" style="display: none;"></div>
   </div>
 
   <script>
+    // آدرس اسکریپت خود را در اینجا قرار دهید:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxYyLX4mA-v5YD78f4qWhJeCmlYI2P2QpWHvSpH3pT8cSy6G5elsb9NwEp2iljK4EA/exec";
 
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
-      
       event.target.classList.add('active');
       document.getElementById('panel-' + tab).classList.add('active');
     }
@@ -146,21 +155,36 @@
       s.innerText = msg;
     }
 
-    function sendAction(type, detail, value) {
+    function sendRequest(type, detail, scoreChange, costInputId) {
       var uid = document.getElementById('userId').value;
       if (!uid) {
         showStatus('لطفاً ابتدا کد شرکت‌کننده را وارد یا اسکن کنید!', 'error');
         return;
       }
 
-      showStatus('در حال ثبت در دیتابیس...', 'loading');
+      var creditChange = 0;
+      if (costInputId) {
+        var inputVal = document.getElementById(costInputId).value;
+        var amount = Number(inputVal);
+        if (inputVal !== "" && (isNaN(amount) || amount <= 0)) {
+          showStatus('لطفاً مبلغ معتبری وارد کنید!', 'error');
+          return;
+        }
+        if (inputVal !== "") {
+          // صندوق اعتبار را مثبت و سایر بخش‌ها اعتبار را کم (منفی) می‌کنند
+          creditChange = (type === 'BANK') ? amount : -amount;
+        }
+      }
+
+      showStatus('در حال بررسی موجودی و ثبت...', 'loading');
 
       var finalUrl = SCRIPT_URL + 
         '?userId=' + encodeURIComponent(uid) + 
         '&type=' + encodeURIComponent(type) + 
         '&detail=' + encodeURIComponent(detail) + 
-        '&value=' + encodeURIComponent(value) + 
-        '&callback=afterSend&t=' + Date.now();
+        '&scoreChange=' + encodeURIComponent(scoreChange) + 
+        '&creditChange=' + encodeURIComponent(creditChange) + 
+        '&callback=processResponse&t=' + Date.now();
 
       var old = document.getElementById('action-script');
       if (old) old.remove();
@@ -168,17 +192,19 @@
       var s = document.createElement('script');
       s.id = 'action-script';
       s.src = finalUrl;
-      s.onload = function() {
-        showStatus('✅ با موفقیت ثبت شد: ' + detail, 'success');
-      };
-      s.onerror = function() {
-        showStatus('✅ اطلاعات ثبت شد.', 'success');
-      };
       document.body.appendChild(s);
     }
 
-    window.afterSend = function(res) {
-      showStatus('✅ تأیید ثبت از سرور دریافت شد', 'success');
+    window.processResponse = function(res) {
+      if (res.status === 'ERROR') {
+        showStatus(res.message, 'error');
+      } else {
+        showStatus(res.message, 'success');
+        // پاک کردن مبالغ بعد از پرداخت موفق
+        document.getElementById('chargeAmount').value = '';
+        document.getElementById('foodCost').value = '';
+        document.getElementById('boothCost').value = '';
+      }
     };
   </script>
 </body>
