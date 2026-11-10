@@ -49,7 +49,12 @@
     const SPREADSHEET_ID = '1WCahyRCTz6nAbZDBvtEOoDCr-v8mAWJzye5tHtOJ_2c';
     const SHEET_NAME = 'Users';
 
-    // تعریف آبجکت استاندارد گوگل برای دریافت بدون باگ داده‌ها
+    // تابع تبدیل اعداد به حروف فارسی
+    const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    function toPersianDigits(num) {
+      return num.toString().replace(/\d/g, x => farsiDigits[x]);
+    }
+
     window.google = window.google || {};
     google.visualization = google.visualization || {};
     google.visualization.Query = {
@@ -65,14 +70,12 @@
         rows.forEach(r => {
           if (r.c && r.c[0] && r.c[0].v !== null) {
             const id = r.c[0].v;
-            // اگر نام خالی بود، شناسه را نمایش بده
-            const name = (r.c[1] && r.c[1].v) ? r.c[1].v : ('شرکت‌کننده ' + id);
+            const name = (r.c[1] && r.c[1].v) ? r.c[1].v : ('شرکت‌کننده ' + toPersianDigits(id));
             const score = (r.c[2] && r.c[2].v !== null && !isNaN(r.c[2].v)) ? Number(r.c[2].v) : 0;
             users.push({ id, name, score });
           }
         });
 
-        // مرتب‌سازی نزولی بر اساس بیشترین امتیاز
         users.sort((a, b) => b.score - a.score);
         const topUsers = users.slice(0, 10);
 
@@ -82,7 +85,7 @@
         } else {
           topUsers.forEach((u, idx) => {
             let badgeClass = '';
-            let badgeIcon = (idx + 1);
+            let badgeIcon = toPersianDigits(idx + 1);
             if (idx === 0) { badgeClass = 'rank-1'; badgeIcon = '🥇 ۱'; }
             else if (idx === 1) { badgeClass = 'rank-2'; badgeIcon = '🥈 ۲'; }
             else if (idx === 2) { badgeClass = 'rank-3'; badgeIcon = '🥉 ۳'; }
@@ -93,10 +96,10 @@
                   <div class="rank-badge ${badgeClass}">${badgeIcon}</div>
                   <div>
                     <div class="name">${u.name}</div>
-                    <div class="uid">شناسه: #${u.id}</div>
+                    <div class="uid">شناسه: #${toPersianDigits(u.id)}</div>
                   </div>
                 </div>
-                <div class="score">${u.score} <span>امتیاز</span></div>
+                <div class="score">${toPersianDigits(u.score.toLocaleString('en-US'))} <span>امتیاز</span></div>
               </div>
             `;
           });
