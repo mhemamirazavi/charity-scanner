@@ -38,6 +38,7 @@
     .btn-game-win { background: #d97706; }
     .btn-game-play { background: #475569; }
     .btn-game-special { background: #9333ea; }
+    .btn-game-fee { background: #0ea5e9; margin-top: 5px; }
     .btn-food { background: #059669; }
     .btn-booth { background: #0284c7; }
 
@@ -55,7 +56,7 @@
     <div id="reader"></div>
 
     <label>کد شرکت‌کننده:</label>
-    <input id="userId" type="number" placeholder="کد را اسکن یا تایپ کنید">
+    <input id="userId" type="text" inputmode="numeric" oninput="formatPersianNumber(this)" placeholder="کد را اسکن یا تایپ کنید (مثلاً: ۱۰۱)">
 
     <!-- تب‌ها -->
     <div class="tabs">
@@ -78,7 +79,7 @@
     <div id="panel-bank" class="section-panel">
       <div class="price-box">
         <label>مبلغ پرداختی برای شارژ کارت (تومان):</label>
-        <input id="chargeAmount" type="number" placeholder="مثلاً: 50000">
+        <input id="chargeAmount" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۵۰,۰۰۰">
       </div>
       <button onclick="sendRequest('BANK', 'شارژ حساب در صندوق', 0, 'chargeAmount')" class="action-btn btn-green">💳 افزایش موجودی کارت</button>
     </div>
@@ -92,13 +93,15 @@
         <option value="چالش واقعیت مجازی VR">چالش واقعیت مجازی VR</option>
       </select>
       <div class="price-box">
-        <label>هزینه ورودی بازی (کسر از حساب):</label>
-        <input id="gameCost" type="number" placeholder="رایگان یا مبلغ">
+        <label>هزینه ورودی بازی (تومان):</label>
+        <input id="gameCost" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۱۵,۰۰۰">
+        <button onclick="sendRequest('GAME', document.getElementById('gameDetail').value + ' (ورود)', 0, 'gameCost')" class="action-btn btn-game-fee">💳 ثبت و کسر مبلغ (بدون امتیاز)</button>
       </div>
+      <label style="margin-top: 15px;">ثبت امتیاز:</label>
       <div class="btn-grid grid-3">
-        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (برد)', 10, 'gameCost')" class="action-btn btn-game-win">+۱۰ برد</button>
-        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (شرکت)', 5, 'gameCost')" class="action-btn btn-game-play">+۵ شرکت</button>
-        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (ویژه)', 20, 'gameCost')" class="action-btn btn-game-special">+۲۰ ویژه</button>
+        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (برد)', 10, null)" class="action-btn btn-game-win">+۱۰ برد</button>
+        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (شرکت)', 5, null)" class="action-btn btn-game-play">+۵ شرکت</button>
+        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (ویژه)', 20, null)" class="action-btn btn-game-special">+۲۰ ویژه</button>
       </div>
     </div>
 
@@ -107,8 +110,8 @@
       <label>سفارش کافه / غذا:</label>
       <input id="foodDetail" type="text" placeholder="مثلاً: قهوه و کیک">
       <div class="price-box">
-        <label>مبلغ سفارش (کسر از حساب):</label>
-        <input id="foodCost" type="number" placeholder="تومان">
+        <label>مبلغ سفارش (تومان):</label>
+        <input id="foodCost" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۸۵,۰۰۰">
       </div>
       <button onclick="sendRequest('FOOD', document.getElementById('foodDetail').value, 0, 'foodCost')" class="action-btn btn-food">☕ پرداخت سفارش کافه</button>
     </div>
@@ -118,8 +121,8 @@
       <label>کالا یا نام غرفه:</label>
       <input id="boothDetail" type="text" placeholder="مثلاً: خرید صنایع دستی غرفه ۱">
       <div class="price-box">
-        <label>مبلغ خرید (کسر از حساب):</label>
-        <input id="boothCost" type="number" placeholder="تومان">
+        <label>مبلغ خرید (تومان):</label>
+        <input id="boothCost" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۱۲۰,۰۰۰">
       </div>
       <button onclick="sendRequest('BOOTH', document.getElementById('boothDetail').value, 0, 'boothCost')" class="action-btn btn-booth">🛍️ پرداخت خرید غرفه</button>
     </div>
@@ -128,8 +131,38 @@
   </div>
 
   <script>
-    // آدرس اسکریپت خود را در اینجا قرار دهید:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBNC5rFJG7DeHx_Bldy6-xZUkzFalIAempsOuEMs_z56d1QJZOM-y04JxI9BF--0e1/exec";
+
+    // توابع تبدیل اعداد به فارسی و برعکس
+    const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    
+    function toPersianDigits(numStr) {
+      return numStr.toString().replace(/\d/g, x => farsiDigits[x]);
+    }
+    
+    function toEnglishDigits(str) {
+      const persian = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+      let res = str;
+      for(let i=0; i<10; i++) { res = res.replace(persian[i], i); }
+      return res;
+    }
+
+    // فرمت‌بندی مبالغ پولی با جداکننده
+    function formatCurrency(input) {
+      let val = toEnglishDigits(input.value).replace(/\D/g, '');
+      if (val) {
+        val = Number(val).toLocaleString('en-US');
+        input.value = toPersianDigits(val);
+      } else {
+        input.value = '';
+      }
+    }
+
+    // فرمت‌بندی عادی اعداد (بدون جداکننده برای آیدی کاربر)
+    function formatPersianNumber(input) {
+      let val = toEnglishDigits(input.value).replace(/\D/g, '');
+      input.value = toPersianDigits(val);
+    }
 
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -139,7 +172,7 @@
     }
 
     function onScanSuccess(decodedText) {
-      document.getElementById('userId').value = decodedText;
+      document.getElementById('userId').value = toPersianDigits(decodedText);
       showStatus('کد ' + decodedText + ' با موفقیت اسکن شد!', 'success');
     }
 
@@ -149,14 +182,20 @@
     } catch(e) {}
 
     function showStatus(msg, type) {
+      // فرمت کردن پیام‌های برگشتی (تبدیل اعداد و جداکننده هزارگان)
+      let formattedMsg = msg.replace(/\d+/g, function(match) {
+        return toPersianDigits(Number(match).toLocaleString('en-US'));
+      });
       var s = document.getElementById('status');
       s.style.display = 'block';
       s.className = 'status ' + type;
-      s.innerText = msg;
+      s.innerText = formattedMsg;
     }
 
     function sendRequest(type, detail, scoreChange, costInputId) {
-      var uid = document.getElementById('userId').value;
+      var uidStr = document.getElementById('userId').value;
+      var uid = toEnglishDigits(uidStr); // ارسال عدد انگلیسی به دیتابیس
+      
       if (!uid) {
         showStatus('لطفاً ابتدا کد شرکت‌کننده را وارد یا اسکن کنید!', 'error');
         return;
@@ -164,19 +203,20 @@
 
       var creditChange = 0;
       if (costInputId) {
-        var inputVal = document.getElementById(costInputId).value;
-        var amount = Number(inputVal);
-        if (inputVal !== "" && (isNaN(amount) || amount <= 0)) {
+        var rawVal = document.getElementById(costInputId).value;
+        var englishVal = toEnglishDigits(rawVal).replace(/\D/g, ''); // حذف کاماها
+        var amount = Number(englishVal);
+        
+        if (rawVal !== "" && (isNaN(amount) || amount <= 0)) {
           showStatus('لطفاً مبلغ معتبری وارد کنید!', 'error');
           return;
         }
-        if (inputVal !== "") {
-          // صندوق اعتبار را مثبت و سایر بخش‌ها اعتبار را کم (منفی) می‌کنند
+        if (rawVal !== "") {
           creditChange = (type === 'BANK') ? amount : -amount;
         }
       }
 
-      showStatus('در حال بررسی موجودی و ثبت...', 'loading');
+      showStatus('در حال بررسی و ثبت...', 'loading');
 
       var finalUrl = SCRIPT_URL + 
         '?userId=' + encodeURIComponent(uid) + 
@@ -200,12 +240,13 @@
         showStatus(res.message, 'error');
       } else {
         showStatus(res.message, 'success');
-        // پاک کردن مبالغ بعد از پرداخت موفق
         document.getElementById('chargeAmount').value = '';
+        document.getElementById('gameCost').value = '';
         document.getElementById('foodCost').value = '';
         document.getElementById('boothCost').value = '';
       }
     };
   </script>
 </body>
-</html>
+                                                                                                                                                         </html>
+                                                                                                                                                         
