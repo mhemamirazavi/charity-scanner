@@ -41,6 +41,7 @@
     .btn-game-fee { background: #0ea5e9; margin-top: 5px; }
     .btn-food { background: #059669; padding: 15px; font-size: 1rem; }
     .btn-booth { background: #0284c7; }
+    .btn-clear { background: #e11d48; padding: 10px; font-size: 0.8rem; margin-top: 5px;}
 
     .status { text-align: center; font-size: 0.9rem; margin-top: 14px; padding: 10px; border-radius: 8px; font-weight: 600; min-height: 40px; }
     .success { background: rgba(52, 211, 153, 0.15); color: #34d399; }
@@ -50,6 +51,20 @@
     .token-alert { display: none; background: #059669; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-top: 15px; animation: popIn 0.3s ease; }
     .token-number { font-size: 3rem; font-weight: 900; margin: 10px 0; }
     @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+    /* CSS منوی کافه */
+    .menu-search { background: #0b0f19; border: 1px solid #475569; padding: 10px; border-radius: 8px; color: white; width: 100%; margin-bottom: 15px; text-align: right;}
+    .menu-title { font-size: 1rem; color: #38bdf8; border-bottom: 1px dashed #334155; padding-bottom: 5px; margin: 15px 0 10px 0; font-weight: 800;}
+    .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+    .menu-box { background: #0b0f19; border: 2px solid #334155; border-radius: 12px; padding: 12px 5px; text-align: center; cursor: pointer; position: relative; transition: 0.2s; user-select: none; }
+    .menu-box.selected { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+    .menu-emoji { font-size: 1.8rem; margin-bottom: 5px; }
+    .menu-name { font-size: 0.75rem; font-weight: 700; color: #e2e8f0; margin-bottom: 5px; }
+    .menu-price { font-size: 0.7rem; color: #94a3b8; }
+    .qty-badge { position: absolute; top: -8px; right: -8px; background: #e11d48; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(0,0,0,0.5);}
+    .total-calc { display: flex; justify-content: space-between; align-items: center; background: #0b0f19; padding: 15px; border-radius: 12px; border: 1px solid #38bdf8; margin: 15px 0; }
+    .total-label { font-weight: bold; color: #94a3b8; }
+    .total-value { font-size: 1.4rem; font-weight: 900; color: #38bdf8; }
   </style>
 </head>
 <body>
@@ -57,7 +72,6 @@
   <div class="card">
     <h2>🎪 پنل اپراتور و صندوق جشنواره</h2>
 
-    <!-- تب‌ها -->
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('gate')">🚪 گیت</button>
       <button class="tab-btn" onclick="switchTab('bank')">💳 صندوق</button>
@@ -66,7 +80,7 @@
       <button class="tab-btn" onclick="switchTab('booth')">🛍️ غرفه</button>
     </div>
 
-    <!-- فیلد مشترک اسکنر (برای گیت، صندوق، بازی و غرفه) -->
+    <!-- فیلد مشترک اسکنر -->
     <div id="scanner-section">
       <div id="reader"></div>
       <label>کد شرکت‌کننده (کیف پول):</label>
@@ -111,18 +125,30 @@
       </div>
     </div>
 
-    <!-- ۴. کافه (سیستم مستقل نوبت‌دهی) -->
+    <!-- ۴. کافه (مدل Grid با انتخابگر) -->
     <div id="panel-food" class="section-panel">
-      <div style="background: #1e293b; border: 1px dashed #475569; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
-        <label style="color:#38bdf8;">📝 ثبت سفارش مستقل (بدون نیاز به کد مشتری):</label>
-        <input id="foodDetail" type="text" placeholder="مثلاً: ۲ چای، ۱ قهوه ترک، ۲ کیک" style="margin-top: 10px;">
-        <button onclick="sendCafeOrder()" class="action-btn btn-food">🧾 ارسال به آشپزخانه و دریافت شماره فیش</button>
+      <div style="background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+        <input type="text" id="menuSearch" class="menu-search" placeholder="🔍 جستجوی اقلام..." oninput="renderMenuUI()">
+        
+        <div class="menu-title">☕ منوی نوشیدنی و کافه</div>
+        <div id="grid-cafe" class="menu-grid"></div>
+
+        <div class="menu-title">🍔 منوی غذای گرم و رستوران</div>
+        <div id="grid-rest" class="menu-grid"></div>
+
+        <div class="total-calc">
+          <span class="total-label">مبلغ کل سفارش:</span>
+          <span class="total-value"><span id="liveTotal">۰</span> <small style="font-size:0.7rem;color:#94a3b8">تومان</small></span>
+        </div>
+
+        <button onclick="sendGridOrder()" class="action-btn btn-food">🧾 ثبت نهایی و چاپ در آشپزخانه</button>
+        <button onclick="clearOrder()" class="action-btn btn-clear">🗑️ پاک کردن سبد سفارش</button>
       </div>
       
       <!-- نمایش شماره فیش به صندوق‌دار -->
       <div id="token-alert" class="token-alert">
         <div>سفارش با موفقیت ثبت شد</div>
-        <div id="token-display" class="token-number">۱۲</div>
+        <div id="token-display" class="token-number">-</div>
         <div>به مشتری اعلام کنید!</div>
       </div>
     </div>
@@ -142,16 +168,16 @@
   </div>
 
   <script>
-    // آدرس اسکریپت خود را اینجا قرار دهید:
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwvXBXqgnx7Ee6zIjN3Kk4aXnAVqN1XSk_f5C2SHe90NL3jcc2QU3jk2tXV6e_gT0NC/exec";
+    // 🔴 آدرس وب‌اپ گوگل اسکریپت خود را اینجا قرار دهید:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBNC5rFJG7DeHx_Bldy6-xZUkzFalIAempsOuEMs_z56d1QJZOM-y04JxI9BF--0e1/exec";
 
+    // --- توابع کمکی فارسی‌سازی ---
     const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     function toPersianDigits(numStr) { return numStr.toString().replace(/\d/g, x => farsiDigits[x]); }
     function toEnglishDigits(str) {
       const persian = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
       let res = str; for(let i=0; i<10; i++) res = res.replace(persian[i], i); return res;
     }
-
     function formatCurrency(input) {
       let val = toEnglishDigits(input.value).replace(/\D/g, '');
       if (val) input.value = toPersianDigits(Number(val).toLocaleString('en-US'));
@@ -159,17 +185,19 @@
     }
     function formatPersianNumber(input) { input.value = toPersianDigits(toEnglishDigits(input.value).replace(/\D/g, '')); }
 
+    // --- منطق تب‌ها و اسکنر ---
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
       event.target.classList.add('active');
       document.getElementById('panel-' + tab).classList.add('active');
       
-      // مخفی کردن اسکنر در تب کافه (چون کافه مستقل شده)
+      // مخفی کردن اسکنر در تب کافه (مدل مستقل پوز)
       if(tab === 'food') {
         document.getElementById('scanner-section').style.display = 'none';
         document.getElementById('status').style.display = 'none';
         document.getElementById('token-alert').style.display = 'none';
+        renderMenuUI(); // رسم مجدد منو
       } else {
         document.getElementById('scanner-section').style.display = 'block';
       }
@@ -187,19 +215,98 @@
       s.style.display = 'block'; s.className = 'status ' + type; s.innerText = formattedMsg;
     }
 
-    // --- تابع اختصاصی سفارش مستقل کافه ---
-    function sendCafeOrder() {
-      var detail = document.getElementById('foodDetail').value;
-      if (!detail) { showStatus('لطفاً اقلام سفارش را بنویسید!', 'error'); return; }
-      
-      document.getElementById('token-alert').style.display = 'none';
-      showStatus('در حال ارسال به آشپزخانه...', 'loading');
+    // ==========================================
+    // سیستم جدید منوی گرید (To-Do Style)
+    // ==========================================
+    const menuItems = [
+      { id: 'c1', type: 'cafe', name: 'اسپرسو', emoji: '☕', price: 35000 },
+      { id: 'c2', type: 'cafe', name: 'هات چاکلت', emoji: '🍫', price: 45000 },
+      { id: 'c3', type: 'cafe', name: 'چای لیوانی', emoji: '🍵', price: 15000 },
+      { id: 'c4', type: 'cafe', name: 'آبمیوه طبیعی', emoji: '🍹', price: 40000 },
+      { id: 'c5', type: 'cafe', name: 'کیک شکلاتی', emoji: '🍰', price: 30000 },
+      { id: 'c6', type: 'cafe', name: 'کیک هویج', emoji: '🥕', price: 25000 },
+      { id: 'r1', type: 'rest', name: 'اسنک گوشت', emoji: '🥪', price: 65000 },
+      { id: 'r2', type: 'rest', name: 'اسنک مرغ', emoji: '🌮', price: 55000 },
+      { id: 'r3', type: 'rest', name: 'سیب‌زمینی', emoji: '🍟', price: 40000 },
+      { id: 'r4', type: 'rest', name: 'پاستا', emoji: '🍝', price: 95000 }
+    ];
 
-      var finalUrl = SCRIPT_URL + '?action=cafe_order&detail=' + encodeURIComponent(detail) + '&callback=processCafeResponse&t=' + Date.now();
+    let currentOrder = {}; // ساختار: { 'c1': 2, 'r2': 1 }
+
+    function renderMenuUI() {
+      const searchTerm = document.getElementById('menuSearch').value.trim();
+      let cafeHTML = '';
+      let restHTML = '';
+      let totalAmount = 0;
+
+      menuItems.forEach(item => {
+        if(item.name.includes(searchTerm)) {
+          let qty = currentOrder[item.id] || 0;
+          let cssClass = qty > 0 ? 'menu-box selected' : 'menu-box';
+          let badgeHTML = qty > 0 ? `<div class="qty-badge">${toPersianDigits(qty)}</div>` : '';
+          
+          let html = `
+            <div class="${cssClass}" onclick="toggleItem('${item.id}')">
+              ${badgeHTML}
+              <div class="menu-emoji">${item.emoji}</div>
+              <div class="menu-name">${item.name}</div>
+              <div class="menu-price">${toPersianDigits(item.price.toLocaleString('en-US'))}</div>
+            </div>`;
+            
+          if(item.type === 'cafe') cafeHTML += html;
+          else restHTML += html;
+
+          totalAmount += qty * item.price;
+        }
+      });
+
+      document.getElementById('grid-cafe').innerHTML = cafeHTML;
+      document.getElementById('grid-rest').innerHTML = restHTML;
+      document.getElementById('liveTotal').innerText = toPersianDigits(totalAmount.toLocaleString('en-US'));
+    }
+
+    function toggleItem(id) {
+      // هر بار لمس روی آیتم، یک عدد به تعداد آن اضافه می‌کند
+      currentOrder[id] = (currentOrder[id] || 0) + 1;
+      renderMenuUI();
+    }
+
+    function clearOrder() {
+      currentOrder = {};
+      renderMenuUI();
+      document.getElementById('token-alert').style.display = 'none';
+      document.getElementById('status').style.display = 'none';
+    }
+
+    function sendGridOrder() {
+      let total = 0;
+      let orderParts = [];
+
+      for (let id in currentOrder) {
+        let qty = currentOrder[id];
+        let item = menuItems.find(m => m.id === id);
+        total += qty * item.price;
+        orderParts.push(`${toPersianDigits(qty)} عدد ${item.name}`);
+      }
+
+      if (orderParts.length === 0) {
+        showStatus('هیچ آیتمی انتخاب نشده است!', 'error');
+        return;
+      }
+
+      // تولید متن تمیز برای مانیتور آشپزخانه
+      let detailString = orderParts.join('، ') + ` (مجموع: ${toPersianDigits(total.toLocaleString('en-US'))} تومان)`;
+
+      document.getElementById('token-alert').style.display = 'none';
+      showStatus('در حال ارسال فیش به آشپزخانه...', 'loading');
+
+      var finalUrl = SCRIPT_URL + '?action=cafe_order&detail=' + encodeURIComponent(detailString) + '&callback=processCafeResponse&t=' + Date.now();
+      
       var old = document.getElementById('cafe-script');
       if (old) old.remove();
       var s = document.createElement('script');
-      s.id = 'cafe-script'; s.src = finalUrl;
+      s.id = 'cafe-script'; 
+      s.src = finalUrl;
       document.body.appendChild(s);
     }
 
@@ -208,10 +315,15 @@
       var tokenAlert = document.getElementById('token-alert');
       tokenAlert.style.display = 'block';
       document.getElementById('token-display').innerText = toPersianDigits(res.orderNum);
-      document.getElementById('foodDetail').value = ''; // خالی کردن فرم برای مشتری بعدی
+      
+      // سبد خرید را برای مشتری بعدی خالی می‌کند
+      currentOrder = {};
+      renderMenuUI();
     };
 
-    // --- تابع تراکنش‌های کیف پول و گیت ---
+    // ==========================================
+    // توابع تراکنش‌های عادی (کیف پول و بازی)
+    // ==========================================
     function sendRequest(type, detail, scoreChange, costInputId) {
       var uidStr = document.getElementById('userId').value;
       var uid = toEnglishDigits(uidStr);
