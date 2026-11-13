@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>پنل جامع و صندوق جشنواره</title>
+  <title>پنل اپراتور و صندوق</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap');
@@ -13,8 +13,8 @@
     h2 { text-align: center; color: #38bdf8; font-size: 1.25rem; margin-bottom: 14px; font-weight: 800; }
     #reader { border-radius: 12px; overflow: hidden; border: 2px dashed #475569; margin-bottom: 14px; background: #0b0f19; }
     
-    label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; }
-    input, select { width: 100%; padding: 11px; border-radius: 10px; background: #0f172a; border: 1px solid #475569; color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 12px; outline: none; }
+    label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; font-weight: 600; }
+    input, select { width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; border: 1px solid #475569; color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 15px; outline: none; }
     input:focus, select:focus { border-color: #38bdf8; }
     
     .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
@@ -29,7 +29,7 @@
     .grid-2 { grid-template-columns: 1fr 1fr; }
     .grid-3 { grid-template-columns: repeat(3, 1fr); }
 
-    button.action-btn { border: none; border-radius: 10px; padding: 12px 6px; font-weight: 700; cursor: pointer; color: #fff; font-size: 0.85rem; transition: 0.15s; width: 100%; }
+    button.action-btn { border: none; border-radius: 10px; padding: 12px 6px; font-weight: 700; cursor: pointer; color: #fff; font-size: 0.9rem; transition: 0.15s; width: 100%; }
     button.action-btn:active { transform: scale(0.97); }
 
     .btn-green { background: #10b981; }
@@ -39,24 +39,23 @@
     .btn-game-play { background: #475569; }
     .btn-game-special { background: #9333ea; }
     .btn-game-fee { background: #0ea5e9; margin-top: 5px; }
-    .btn-food { background: #059669; }
+    .btn-food { background: #059669; padding: 15px; font-size: 1rem; }
     .btn-booth { background: #0284c7; }
 
     .status { text-align: center; font-size: 0.9rem; margin-top: 14px; padding: 10px; border-radius: 8px; font-weight: 600; min-height: 40px; }
     .success { background: rgba(52, 211, 153, 0.15); color: #34d399; }
     .error { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
     .loading { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+
+    .token-alert { display: none; background: #059669; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-top: 15px; animation: popIn 0.3s ease; }
+    .token-number { font-size: 3rem; font-weight: 900; margin: 10px 0; }
+    @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
   </style>
 </head>
 <body>
 
   <div class="card">
     <h2>🎪 پنل اپراتور و صندوق جشنواره</h2>
-
-    <div id="reader"></div>
-
-    <label>کد شرکت‌کننده:</label>
-    <input id="userId" type="text" inputmode="numeric" oninput="formatPersianNumber(this)" placeholder="کد را اسکن یا تایپ کنید (مثلاً: ۱۰۱)">
 
     <!-- تب‌ها -->
     <div class="tabs">
@@ -67,6 +66,13 @@
       <button class="tab-btn" onclick="switchTab('booth')">🛍️ غرفه</button>
     </div>
 
+    <!-- فیلد مشترک اسکنر (برای گیت، صندوق، بازی و غرفه) -->
+    <div id="scanner-section">
+      <div id="reader"></div>
+      <label>کد شرکت‌کننده (کیف پول):</label>
+      <input id="userId" type="text" inputmode="numeric" oninput="formatPersianNumber(this)" placeholder="کد را اسکن یا تایپ کنید">
+    </div>
+
     <!-- ۱. گیت -->
     <div id="panel-gate" class="section-panel active">
       <div class="btn-grid grid-2">
@@ -75,10 +81,10 @@
       </div>
     </div>
 
-    <!-- ۲. صندوق (افزایش اعتبار) -->
+    <!-- ۲. صندوق -->
     <div id="panel-bank" class="section-panel">
       <div class="price-box">
-        <label>مبلغ پرداختی برای شارژ کارت (تومان):</label>
+        <label>مبلغ پرداختی روی پوز (تومان):</label>
         <input id="chargeAmount" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۵۰,۰۰۰">
       </div>
       <button onclick="sendRequest('BANK', 'شارژ حساب در صندوق', 0, 'chargeAmount')" class="action-btn btn-green">💳 افزایش موجودی کارت</button>
@@ -105,15 +111,20 @@
       </div>
     </div>
 
-    <!-- ۴. کافه و رستوران -->
+    <!-- ۴. کافه (سیستم مستقل نوبت‌دهی) -->
     <div id="panel-food" class="section-panel">
-      <label>سفارش کافه / غذا:</label>
-      <input id="foodDetail" type="text" placeholder="مثلاً: قهوه و کیک">
-      <div class="price-box">
-        <label>مبلغ سفارش (تومان):</label>
-        <input id="foodCost" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۸۵,۰۰۰">
+      <div style="background: #1e293b; border: 1px dashed #475569; padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+        <label style="color:#38bdf8;">📝 ثبت سفارش مستقل (بدون نیاز به کد مشتری):</label>
+        <input id="foodDetail" type="text" placeholder="مثلاً: ۲ چای، ۱ قهوه ترک، ۲ کیک" style="margin-top: 10px;">
+        <button onclick="sendCafeOrder()" class="action-btn btn-food">🧾 ارسال به آشپزخانه و دریافت شماره فیش</button>
       </div>
-      <button onclick="sendRequest('FOOD', document.getElementById('foodDetail').value, 0, 'foodCost')" class="action-btn btn-food">☕ پرداخت سفارش کافه</button>
+      
+      <!-- نمایش شماره فیش به صندوق‌دار -->
+      <div id="token-alert" class="token-alert">
+        <div>سفارش با موفقیت ثبت شد</div>
+        <div id="token-display" class="token-number">۱۲</div>
+        <div>به مشتری اعلام کنید!</div>
+      </div>
     </div>
 
     <!-- ۵. غرفه‌ها -->
@@ -131,122 +142,108 @@
   </div>
 
   <script>
+    // آدرس اسکریپت خود را اینجا قرار دهید:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBNC5rFJG7DeHx_Bldy6-xZUkzFalIAempsOuEMs_z56d1QJZOM-y04JxI9BF--0e1/exec";
 
-    // توابع تبدیل اعداد به فارسی و برعکس
     const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    
-    function toPersianDigits(numStr) {
-      return numStr.toString().replace(/\d/g, x => farsiDigits[x]);
-    }
-    
+    function toPersianDigits(numStr) { return numStr.toString().replace(/\d/g, x => farsiDigits[x]); }
     function toEnglishDigits(str) {
       const persian = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
-      let res = str;
-      for(let i=0; i<10; i++) { res = res.replace(persian[i], i); }
-      return res;
+      let res = str; for(let i=0; i<10; i++) res = res.replace(persian[i], i); return res;
     }
 
-    // فرمت‌بندی مبالغ پولی با جداکننده
     function formatCurrency(input) {
       let val = toEnglishDigits(input.value).replace(/\D/g, '');
-      if (val) {
-        val = Number(val).toLocaleString('en-US');
-        input.value = toPersianDigits(val);
-      } else {
-        input.value = '';
-      }
+      if (val) input.value = toPersianDigits(Number(val).toLocaleString('en-US'));
+      else input.value = '';
     }
-
-    // فرمت‌بندی عادی اعداد (بدون جداکننده برای آیدی کاربر)
-    function formatPersianNumber(input) {
-      let val = toEnglishDigits(input.value).replace(/\D/g, '');
-      input.value = toPersianDigits(val);
-    }
+    function formatPersianNumber(input) { input.value = toPersianDigits(toEnglishDigits(input.value).replace(/\D/g, '')); }
 
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
       event.target.classList.add('active');
       document.getElementById('panel-' + tab).classList.add('active');
+      
+      // مخفی کردن اسکنر در تب کافه (چون کافه مستقل شده)
+      if(tab === 'food') {
+        document.getElementById('scanner-section').style.display = 'none';
+        document.getElementById('status').style.display = 'none';
+        document.getElementById('token-alert').style.display = 'none';
+      } else {
+        document.getElementById('scanner-section').style.display = 'block';
+      }
     }
 
     function onScanSuccess(decodedText) {
       document.getElementById('userId').value = toPersianDigits(decodedText);
-      showStatus('کد ' + decodedText + ' با موفقیت اسکن شد!', 'success');
+      showStatus('کد اسکن شد!', 'success');
     }
-
-    try {
-      var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } });
-      scanner.render(onScanSuccess);
-    } catch(e) {}
+    try { var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } }); scanner.render(onScanSuccess); } catch(e) {}
 
     function showStatus(msg, type) {
-      // فرمت کردن پیام‌های برگشتی (تبدیل اعداد و جداکننده هزارگان)
-      let formattedMsg = msg.replace(/\d+/g, function(match) {
-        return toPersianDigits(Number(match).toLocaleString('en-US'));
-      });
+      let formattedMsg = msg.replace(/\d+/g, match => toPersianDigits(Number(match).toLocaleString('en-US')));
       var s = document.getElementById('status');
-      s.style.display = 'block';
-      s.className = 'status ' + type;
-      s.innerText = formattedMsg;
+      s.style.display = 'block'; s.className = 'status ' + type; s.innerText = formattedMsg;
     }
 
+    // --- تابع اختصاصی سفارش مستقل کافه ---
+    function sendCafeOrder() {
+      var detail = document.getElementById('foodDetail').value;
+      if (!detail) { showStatus('لطفاً اقلام سفارش را بنویسید!', 'error'); return; }
+      
+      document.getElementById('token-alert').style.display = 'none';
+      showStatus('در حال ارسال به آشپزخانه...', 'loading');
+
+      var finalUrl = SCRIPT_URL + '?action=cafe_order&detail=' + encodeURIComponent(detail) + '&callback=processCafeResponse&t=' + Date.now();
+      var old = document.getElementById('cafe-script');
+      if (old) old.remove();
+      var s = document.createElement('script');
+      s.id = 'cafe-script'; s.src = finalUrl;
+      document.body.appendChild(s);
+    }
+
+    window.processCafeResponse = function(res) {
+      document.getElementById('status').style.display = 'none';
+      var tokenAlert = document.getElementById('token-alert');
+      tokenAlert.style.display = 'block';
+      document.getElementById('token-display').innerText = toPersianDigits(res.orderNum);
+      document.getElementById('foodDetail').value = ''; // خالی کردن فرم برای مشتری بعدی
+    };
+
+    // --- تابع تراکنش‌های کیف پول و گیت ---
     function sendRequest(type, detail, scoreChange, costInputId) {
       var uidStr = document.getElementById('userId').value;
-      var uid = toEnglishDigits(uidStr); // ارسال عدد انگلیسی به دیتابیس
-      
-      if (!uid) {
-        showStatus('لطفاً ابتدا کد شرکت‌کننده را وارد یا اسکن کنید!', 'error');
-        return;
-      }
+      var uid = toEnglishDigits(uidStr);
+      if (!uid) { showStatus('لطفاً کد شرکت‌کننده را وارد کنید!', 'error'); return; }
 
       var creditChange = 0;
       if (costInputId) {
         var rawVal = document.getElementById(costInputId).value;
-        var englishVal = toEnglishDigits(rawVal).replace(/\D/g, ''); // حذف کاماها
-        var amount = Number(englishVal);
-        
-        if (rawVal !== "" && (isNaN(amount) || amount <= 0)) {
-          showStatus('لطفاً مبلغ معتبری وارد کنید!', 'error');
-          return;
-        }
-        if (rawVal !== "") {
-          creditChange = (type === 'BANK') ? amount : -amount;
-        }
+        var amount = Number(toEnglishDigits(rawVal).replace(/\D/g, ''));
+        if (rawVal !== "" && (isNaN(amount) || amount <= 0)) { showStatus('مبلغ نامعتبر است!', 'error'); return; }
+        if (rawVal !== "") creditChange = (type === 'BANK') ? amount : -amount;
       }
 
-      showStatus('در حال بررسی و ثبت...', 'loading');
-
-      var finalUrl = SCRIPT_URL + 
-        '?userId=' + encodeURIComponent(uid) + 
-        '&type=' + encodeURIComponent(type) + 
-        '&detail=' + encodeURIComponent(detail) + 
-        '&scoreChange=' + encodeURIComponent(scoreChange) + 
-        '&creditChange=' + encodeURIComponent(creditChange) + 
-        '&callback=processResponse&t=' + Date.now();
-
+      showStatus('در حال ثبت...', 'loading');
+      var finalUrl = SCRIPT_URL + '?userId=' + encodeURIComponent(uid) + '&type=' + encodeURIComponent(type) + '&detail=' + encodeURIComponent(detail) + '&scoreChange=' + encodeURIComponent(scoreChange) + '&creditChange=' + encodeURIComponent(creditChange) + '&callback=processResponse&t=' + Date.now();
+      
       var old = document.getElementById('action-script');
       if (old) old.remove();
-
       var s = document.createElement('script');
-      s.id = 'action-script';
-      s.src = finalUrl;
+      s.id = 'action-script'; s.src = finalUrl;
       document.body.appendChild(s);
     }
 
     window.processResponse = function(res) {
-      if (res.status === 'ERROR') {
-        showStatus(res.message, 'error');
-      } else {
+      if (res.status === 'ERROR') showStatus(res.message, 'error');
+      else {
         showStatus(res.message, 'success');
         document.getElementById('chargeAmount').value = '';
         document.getElementById('gameCost').value = '';
-        document.getElementById('foodCost').value = '';
         document.getElementById('boothCost').value = '';
       }
     };
   </script>
 </body>
-                                                                                                                                                         </html>
-                                                                                                                                                         
+</html>
