@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>مانیتور سفارشات آشپزخانه (KDS)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #1e293b; padding-bottom: 15px; }
+    h1 { color: #38bdf8; font-size: 2rem; font-weight: 900; }
+    .status-badge { background: #1e293b; padding: 8px 16px; border-radius: 20px; font-size: 1rem; color: #94a3b8; }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+    .order-card { 
+      background: #1e293b; border-top: 5px solid #f59e0b; border-radius: 12px; 
+      padding: 20px; display: flex; flex-direction: column; justify-content: space-between;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: fadeIn 0.4s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .order-header { text-align: center; margin-bottom: 15px; border-bottom: 1px dashed #334155; padding-bottom: 10px; }
+    .order-id-label { font-size: 1rem; color: #94a3b8; margin-bottom: -5px; }
+    .order-id-number { font-size: 3.5rem; font-weight: 900; color: #f59e0b; }
+    .order-time { font-size: 0.9rem; color: #64748b; }
+    
+    .order-detail { font-size: 1.5rem; font-weight: 800; line-height: 1.6; margin-bottom: 25px; flex-grow: 1; text-align: center; color: #e2e8f0; }
+    
+    .btn-ready { 
+      background: #10b981; color: white; border: none; padding: 15px; border-radius: 10px; 
+      font-size: 1.2rem; font-weight: 900; cursor: pointer; transition: 0.2s; width: 100%;
+    }
+    .btn-ready:hover { background: #059669; }
+    .btn-ready:active { transform: scale(0.97); }
+    
+    .empty-state { grid-column: 1 / -1; text-align: center; font-size: 1.5rem; color: #475569; margin-top: 50px; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>👨‍🍳 مانیتور زنده سفارشات کافه</h1>
+    <div class="status-badge" id="last-update">آخرین بروزرسانی: در حال اتصال...</div>
+  </header>
+
+  <div id="orders-container" class="grid">
+    <div class="empty-state">در حال بارگذاری سفارشات...</div>
+  </div>
+
+  <script>
+    // آدرس اسکریپت خود را دقیقاً در اینجا قرار دهید:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBNC5rFJG7DeHx_Bldy6-xZUkzFalIAempsOuEMs_z56d1QJZOM-y04JxI9BF--0e1/exec";
+
+    const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    function toPersianDigits(numStr) { return numStr.toString().replace(/\d/g, x => farsiDigits[x]); }
+
+    window.renderOrders = function(orders) {
+      const container = document.getElementById('orders-container');
+      
+      if (!orders || orders.length === 0) {
+        container.innerHTML = '<div class="empty-state">🎉 سفارشی در صف نیست! خسته نباشید.</div>';
+      } else {
+        let html = '';
+        orders.forEach(order => {
+          html += `
+            <div class="order-card" id="order-${order.orderId}">
+              <div class="order-header">
+                <div class="order-id-label">شماره فیش</div>
+                <div class="order-id-number">${toPersianDigits(order.orderId)}</div>
+                <div class="order-time">🕒 ${toPersianDigits(order.time)}</div>
+              </div>
+              <div class="order-detail">${toPersianDigits(order.detail)}</div>
+              <button class="btn-ready" onclick="markAsReady(${order.orderId}, this)">✔️ آماده شد</button>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      }
+      
+      const now = new Date();
+      const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+      document.getElementById('last-update').innerText = 'بروزرسانی: ' + toPersianDigits(timeStr);
+    };
+
+    function fetchOrders() {
+      const oldScript = document.getElementById('fetch-script');
+      if (oldScript) oldScript.remove();
+      const script = document.createElement('script');
+      script.id = 'fetch-script';
+      script.src = SCRIPT_URL + '?action=get_orders&callback=renderOrders&t=' + Date.now();
+      document.body.appendChild(script);
+    }
+
+    window.markAsReady = function(orderId, btnElement) {
+      btnElement.innerText = "در حال ثبت...";
+      btnElement.style.background = "#64748b";
+      btnElement.disabled = true;
+
+      var finalUrl = SCRIPT_URL + '?action=complete_order&orderId=' + encodeURIComponent(orderId) + '&callback=orderCompleted&t=' + Date.now();
+      var s = document.createElement('script');
+      s.src = finalUrl;
+      
+      var card = document.getElementById('order-' + orderId);
+      if(card) {
+        card.style.opacity = '0';
+        setTimeout(() => { card.remove(); }, 300);
+      }
+      document.body.appendChild(s);
+    }
+    window.orderCompleted = function(res) {};
+
+    // رفرش خودکار هر ۵ ثانیه
+    fetchOrders();
+    setInterval(fetchOrders, 5000);
+  </script>
+</body>
+</html>
