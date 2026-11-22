@@ -7,41 +7,93 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #1e293b; padding-bottom: 15px; }
-    h1 { color: #38bdf8; font-size: 2rem; font-weight: 900; }
-    .status-badge { background: #1e293b; padding: 8px 16px; border-radius: 20px; font-size: 1rem; color: #94a3b8; }
-    
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-    .order-card { 
-      background: #1e293b; border-top: 5px solid #f59e0b; border-radius: 12px; 
-      padding: 20px; display: flex; flex-direction: column; justify-content: space-between;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3); animation: fadeIn 0.4s ease;
+    body { background-color: #0b1120; color: #f8fafc; min-height: 100vh; padding: 20px; }
+
+    header {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+      margin-bottom: 26px; border-bottom: 2px solid #1e293b; padding-bottom: 16px;
     }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    
-    .order-header { text-align: center; margin-bottom: 15px; border-bottom: 1px dashed #334155; padding-bottom: 10px; }
-    .order-id-label { font-size: 1rem; color: #94a3b8; margin-bottom: -5px; }
-    .order-id-number { font-size: 3.5rem; font-weight: 900; color: #f59e0b; }
-    .order-time { font-size: 0.9rem; color: #64748b; }
-    
-    .order-detail { font-size: 1.5rem; font-weight: 800; line-height: 1.6; margin-bottom: 25px; flex-grow: 1; text-align: center; color: #e2e8f0; }
-    
-    .btn-ready { 
-      background: #10b981; color: white; border: none; padding: 15px; border-radius: 10px; 
-      font-size: 1.2rem; font-weight: 900; cursor: pointer; transition: 0.2s; width: 100%;
+    h1 { color: #38bdf8; font-size: 1.9rem; font-weight: 900; }
+    .header-controls { display: flex; align-items: center; gap: 12px; }
+
+    .btn-sound {
+      background: #f59e0b; color: #0f172a; border: none; padding: 10px 18px;
+      border-radius: 12px; font-size: 0.95rem; font-weight: 900; cursor: pointer;
+      transition: 0.2s; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+    }
+    .btn-sound.active {
+      background: rgba(16, 185, 129, 0.18); color: #34d399;
+      border: 1.5px solid #10b981; box-shadow: none;
+    }
+
+    .status-badge { background: #1e293b; padding: 10px 16px; border-radius: 12px; font-size: 0.95rem; color: #94a3b8; font-weight: 700; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 20px; }
+
+    .order-card {
+      background: #1e293b; border: 2px solid #334155; border-top: 6px solid #f59e0b;
+      border-radius: 14px; padding: 20px; display: flex; flex-direction: column;
+      justify-content: space-between; box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+      transition: background-color 0.3s, border-color 0.3s, opacity 0.3s;
+    }
+    .order-card.new-anim { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* استایل سفارش دارای تاخیر (بیش از ۱۰ دقیقه) */
+    .order-card.overdue {
+      background: #2c1118;
+      border-color: #ef4444;
+      border-top: 6px solid #ef4444;
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.4);
+      animation: overdueShake 3s ease-in-out infinite;
+    }
+    .order-card.overdue .order-id-number { color: #f87171; }
+    .order-card.overdue .order-time { color: #fca5a5; }
+
+    /* لرزش کوتاه در ابتدای هر ۳ ثانیه تا متن خوانا بماند */
+    @keyframes overdueShake {
+      0%, 82%, 100% { transform: translateX(0); }
+      85% { transform: translateX(-6px) rotate(-0.6deg); }
+      88% { transform: translateX(6px) rotate(0.6deg); }
+      91% { transform: translateX(-5px) rotate(-0.4deg); }
+      94% { transform: translateX(5px) rotate(0.4deg); }
+      97% { transform: translateX(-2px); }
+    }
+
+    .overdue-banner {
+      background: #ef4444; color: #fff; text-align: center; font-size: 0.85rem;
+      font-weight: 900; padding: 5px 10px; border-radius: 8px; margin-bottom: 12px;
+      letter-spacing: 0.2px;
+    }
+
+    .order-header { text-align: center; margin-bottom: 15px; border-bottom: 1px dashed #334155; padding-bottom: 12px; }
+    .order-id-label { font-size: 0.95rem; color: #94a3b8; margin-bottom: -4px; }
+    .order-id-number { font-size: 3.4rem; font-weight: 900; color: #f59e0b; line-height: 1.2; }
+    .order-time { font-size: 0.92rem; color: #94a3b8; margin-top: 4px; font-weight: 700; }
+
+    .order-detail {
+      font-size: 1.35rem; font-weight: 800; line-height: 1.7;
+      margin-bottom: 22px; flex-grow: 1; text-align: center; color: #f1f5f9;
+    }
+
+    .btn-ready {
+      background: #10b981; color: white; border: none; padding: 14px; border-radius: 10px;
+      font-size: 1.15rem; font-weight: 900; cursor: pointer; transition: 0.2s; width: 100%;
     }
     .btn-ready:hover { background: #059669; }
     .btn-ready:active { transform: scale(0.97); }
-    
-    .empty-state { grid-column: 1 / -1; text-align: center; font-size: 1.5rem; color: #475569; margin-top: 50px; }
+
+    .empty-state { grid-column: 1 / -1; text-align: center; font-size: 1.5rem; color: #475569; margin-top: 60px; font-weight: 700; }
   </style>
 </head>
 <body>
 
   <header>
     <h1>👨‍🍳 مانیتور زنده سفارشات کافه</h1>
-    <div class="status-badge" id="last-update">آخرین بروزرسانی: در حال اتصال...</div>
+    <div class="header-controls">
+      <button id="sound-btn" class="btn-sound" onclick="toggleSound()">🔇 فعال‌سازی صدای هشدار (کلیک کنید)</button>
+      <div class="status-badge" id="last-update">در حال اتصال...</div>
+    </div>
   </header>
 
   <div id="orders-container" class="grid">
@@ -49,26 +101,152 @@
   </div>
 
   <script>
-    // آدرس اسکریپت خود را دقیقاً در اینجا قرار دهید:
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwvXBXqgnx7Ee6zIjN3Kk4aXnAVqN1XSk_f5C2SHe90NL3jcc2QU3jk2tXV6e_gT0NC/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBNC5rFJG7DeHx_Bldy6-xZUkzFalIAempsOuEMs_z56d1QJZOM-y04JxI9BF--0e1/exec";
+    const OVERDUE_MINUTES = 10; // آستانه تاخیر (دقیقه)
 
     const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     function toPersianDigits(numStr) { return numStr.toString().replace(/\d/g, x => farsiDigits[x]); }
 
+    // متغیرهای وضعیت صدا و ردیابی سفارش‌ها
+    let audioCtx = null;
+    let soundEnabled = false;
+    let isFirstLoad = true;
+    const knownOrderIds = new Set();
+    const overdueAlertedIds = new Set();
+
+    // فعال‌سازی یا قطع صدا با کلیک کاربر
+    function toggleSound() {
+      const btn = document.getElementById('sound-btn');
+      if (!soundEnabled) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!audioCtx && AudioContext) audioCtx = new AudioContext();
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+        soundEnabled = true;
+        btn.classList.add('active');
+        btn.innerText = '🔊 صدای هشدار فعال است';
+        playNewOrderSound(); // پخش یک صدای تست ملایم برای اطمینان
+      } else {
+        soundEnabled = false;
+        btn.classList.remove('active');
+        btn.innerText = '🔇 صدای هشدار خاموش است';
+      }
+    }
+
+    // ۱. صدای نوتیفیکیشن ملایم و خوشایند برای سفارش جدید (دو نت صعودی نرم)
+    function playNewOrderSound() {
+      if (!soundEnabled || !audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        const notes = [587.33, 880]; // نت‌های D5 و A5 (ملایم و شفاف)
+        notes.forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.13);
+
+          gain.gain.setValueAtTime(0.001, now + i * 0.13);
+          gain.gain.linearRampToValueAtTime(0.22, now + i * 0.13 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.13 + 0.45);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + i * 0.13);
+          osc.stop(now + i * 0.13 + 0.48);
+        });
+      } catch (e) {}
+    }
+
+    // ۲. صدای هشدار متفاوت برای سفارش‌های دیرشده (دو بوق متمایز با تُن هشداردهنده)
+    function playOverdueSound() {
+      if (!soundEnabled || !audioCtx) return;
+      try {
+        const now = audioCtx.currentTime;
+        const pulses = [
+          { start: 0.0, freq: 520 },
+          { start: 0.22, freq: 440 },
+          { start: 0.44, freq: 520 }
+        ];
+        pulses.forEach(p => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(p.freq, now + p.start);
+
+          gain.gain.setValueAtTime(0.001, now + p.start);
+          gain.gain.linearRampToValueAtTime(0.32, now + p.start + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + p.start + 0.18);
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(now + p.start);
+          osc.stop(now + p.start + 0.2);
+        });
+      } catch (e) {}
+    }
+
+    // محاسبه دقیقه‌های گذشته از زمان ثبت سفارش (فرمت HH:mm)
+    function getElapsedMinutes(timeStr) {
+      if (!timeStr || typeof timeStr !== 'string' || !timeStr.includes(':')) return 0;
+      const parts = timeStr.split(':');
+      const h = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10);
+      if (isNaN(h) || isNaN(m)) return 0;
+
+      const now = new Date();
+      const orderDate = new Date();
+      orderDate.setHours(h, m, 0, 0);
+
+      const diffMs = now - orderDate;
+      const diffMins = Math.floor(diffMs / 60000);
+      return diffMins < 0 ? 0 : diffMins;
+    }
+
     window.renderOrders = function(orders) {
       const container = document.getElementById('orders-container');
-      
+      let hasNewOrder = false;
+      let hasNewOverdue = false;
+
       if (!orders || orders.length === 0) {
         container.innerHTML = '<div class="empty-state">🎉 سفارشی در صف نیست! خسته نباشید.</div>';
       } else {
         let html = '';
         orders.forEach(order => {
+          const idKey = order.orderId.toString();
+          const isNew = !knownOrderIds.has(idKey);
+          if (isNew) {
+            knownOrderIds.add(idKey);
+            if (!isFirstLoad) hasNewOrder = true;
+          }
+
+          const elapsed = getElapsedMinutes(order.time);
+          const isOverdue = elapsed >= OVERDUE_MINUTES;
+
+          if (isOverdue && !overdueAlertedIds.has(idKey)) {
+            overdueAlertedIds.add(idKey);
+            hasNewOverdue = true;
+          }
+
+          const cardClasses = [
+            'order-card',
+            isNew ? 'new-anim' : '',
+            isOverdue ? 'overdue' : ''
+          ].join(' ').trim();
+
+          const overdueBanner = isOverdue
+            ? `<div class="overdue-banner">⚠️ تاخیر! ${toPersianDigits(elapsed)} دقیقه گذشته</div>`
+            : '';
+
+          const elapsedText = elapsed === 0
+            ? 'هم‌اکنون'
+            : `${toPersianDigits(elapsed)} دقیقه پیش`;
+
           html += `
-            <div class="order-card" id="order-${order.orderId}">
+            <div class="${cardClasses}" id="order-${order.orderId}">
+              ${overdueBanner}
               <div class="order-header">
                 <div class="order-id-label">شماره فیش</div>
                 <div class="order-id-number">${toPersianDigits(order.orderId)}</div>
-                <div class="order-time">🕒 ${toPersianDigits(order.time)}</div>
+                <div class="order-time">🕒 ${toPersianDigits(order.time)} (${elapsedText})</div>
               </div>
               <div class="order-detail">${toPersianDigits(order.detail)}</div>
               <button class="btn-ready" onclick="markAsReady(${order.orderId}, this)">✔️ آماده شد</button>
@@ -77,7 +255,16 @@
         });
         container.innerHTML = html;
       }
-      
+
+      isFirstLoad = false;
+
+      // پخش صداها با اولویت و بدون تداخل
+      if (hasNewOverdue) {
+        playOverdueSound();
+      } else if (hasNewOrder) {
+        playNewOrderSound();
+      }
+
       const now = new Date();
       const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
       document.getElementById('last-update').innerText = 'بروزرسانی: ' + toPersianDigits(timeStr);
@@ -100,17 +287,16 @@
       var finalUrl = SCRIPT_URL + '?action=complete_order&orderId=' + encodeURIComponent(orderId) + '&callback=orderCompleted&t=' + Date.now();
       var s = document.createElement('script');
       s.src = finalUrl;
-      
+
       var card = document.getElementById('order-' + orderId);
-      if(card) {
+      if (card) {
         card.style.opacity = '0';
         setTimeout(() => { card.remove(); }, 300);
       }
       document.body.appendChild(s);
-    }
+    };
     window.orderCompleted = function(res) {};
 
-    // رفرش خودکار هر ۵ ثانیه
     fetchOrders();
     setInterval(fetchOrders, 5000);
   </script>
