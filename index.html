@@ -2,360 +2,438 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>پنل اپراتور و صندوق</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>پنل صندوق و بازی جشنواره</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap');
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; }
-    body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; padding: 16px; display: flex; flex-direction: column; align-items: center; }
-    .card { width: 100%; max-width: 480px; background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-    h2 { text-align: center; color: #38bdf8; font-size: 1.25rem; margin-bottom: 14px; font-weight: 800; }
-    #reader { border-radius: 12px; overflow: hidden; border: 2px dashed #475569; margin-bottom: 14px; background: #0b0f19; }
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Vazirmatn', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: #0b1120; color: #f8fafc; min-height: 100vh; padding: 12px; display: flex; flex-direction: column; align-items: center; }
+    .app-container { width: 100%; max-width: 460px; background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 16px; box-shadow: 0 12px 30px rgba(0,0,0,0.45); }
     
-    label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; font-weight: 600; }
-    input, select { width: 100%; padding: 12px; border-radius: 10px; background: #0f172a; border: 1px solid #475569; color: #fff; font-size: 1.05rem; font-weight: bold; margin-bottom: 15px; outline: none; }
-    input:focus, select:focus { border-color: #38bdf8; }
+    h2 { text-align: center; color: #38bdf8; font-size: 1.15rem; margin-bottom: 14px; font-weight: 900; }
+
+    /* تب‌ها */
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #0f172a; padding: 5px; border-radius: 14px; margin-bottom: 14px; }
+    .tab-btn { background: transparent; border: none; color: #94a3b8; font-size: 0.9rem; font-weight: 700; padding: 11px 8px; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+    .tab-btn.active { background: #38bdf8; color: #0f172a; font-weight: 900; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3); }
+
+    /* کادر ثابت اسکنر (بدون دفورمه شدن) */
+    .scanner-box {
+      position: relative;
+      width: 100%;
+      height: 230px;
+      background: #090d16;
+      border: 2px solid #334155;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .scanner-box.scan-success-flash {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.65) !important;
+    }
+    #reader-video { width: 100%; height: 100%; }
+    #reader-video video { width: 100% !important; height: 230px !important; object-fit: cover !important; border-radius: 14px; }
     
-    .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: #0f172a; padding: 4px; border-radius: 12px; margin-bottom: 16px; }
-    .tab-btn { background: transparent; border: none; color: #94a3b8; font-size: 0.7rem; font-weight: 700; padding: 8px 2px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-    .tab-btn.active { background: #38bdf8; color: #0f172a; font-weight: 900; }
+    .camera-placeholder {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+      background: #090d16; z-index: 5; padding: 16px; text-align: center;
+    }
+    .cam-icon { font-size: 2.4rem; opacity: 0.85; }
+    .btn-start-cam {
+      background: #0284c7; color: #fff; border: none; padding: 12px 22px;
+      border-radius: 12px; font-size: 0.9rem; font-weight: 800; cursor: pointer;
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4); transition: 0.15s;
+    }
+    .btn-start-cam:active { transform: scale(0.96); }
+
+    /* افکت تایید روی تصویر دوربین */
+    .scan-overlay {
+      position: absolute; inset: 0; background: rgba(16, 185, 129, 0.28);
+      backdrop-filter: blur(2px); display: none; flex-direction: column;
+      align-items: center; justify-content: center; z-index: 10; pointer-events: none;
+    }
+    .scan-overlay.show { display: flex; animation: popFade 0.3s ease; }
+    .scan-badge { background: #10b981; color: #052e16; font-weight: 900; padding: 8px 18px; border-radius: 99px; font-size: 1rem; box-shadow: 0 4px 15px rgba(0,0,0,0.4); }
+    @keyframes popFade { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+    .cam-controls { display: none; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .cam-controls.active { display: grid; }
+    .btn-cam-ctrl { background: #334155; color: #e2e8f0; border: none; padding: 8px; border-radius: 10px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+    .btn-cam-stop { background: #9f1239; color: #fff; }
+
+    /* فیلدها */
+    label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 5px; font-weight: 600; }
+    input {
+      width: 100%; padding: 12px; border-radius: 12px; background: #0f172a;
+      border: 1.5px solid #475569; color: #fff; font-size: 1.1rem; font-weight: 800;
+      text-align: center; margin-bottom: 12px; outline: none; transition: 0.2s;
+    }
+    input:focus { border-color: #38bdf8; }
 
     .section-panel { display: none; }
     .section-panel.active { display: block; }
-    .price-box { border-right: 3px solid #38bdf8; padding-right: 10px; margin-bottom: 10px; }
 
-    .btn-grid { display: grid; gap: 8px; }
-    .grid-2 { grid-template-columns: 1fr 1fr; }
-    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    /* مبالغ آماده صندوق */
+    .quick-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+    .btn-quick { background: #0f172a; border: 1px solid #334155; color: #38bdf8; padding: 8px 4px; border-radius: 9px; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+    .btn-quick:active { background: #38bdf8; color: #0f172a; }
 
-    button.action-btn { border: none; border-radius: 10px; padding: 12px 6px; font-weight: 700; cursor: pointer; color: #fff; font-size: 0.9rem; transition: 0.15s; width: 100%; }
+    /* کارت‌های بازی */
+    .game-group-title { font-size: 0.85rem; color: #38bdf8; font-weight: 800; margin: 12px 0 8px; padding-bottom: 4px; border-bottom: 1px dashed #334155; }
+    .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+    .game-card {
+      background: #0f172a; border: 1.5px solid #334155; border-radius: 12px;
+      padding: 10px 8px; text-align: center; cursor: pointer; transition: 0.15s;
+      display: flex; flex-direction: column; justify-content: space-between; gap: 4px;
+    }
+    .game-card.selected { border-color: #10b981; background: rgba(16, 185, 129, 0.14); box-shadow: 0 0 12px rgba(16, 185, 129, 0.2); }
+    .game-title { font-size: 0.82rem; font-weight: 800; color: #f1f5f9; }
+    .game-sub { font-size: 0.68rem; color: #94a3b8; }
+    .game-price { font-size: 0.78rem; font-weight: 800; color: #fbbf24; margin-top: 2px; }
+    .score-tag { display: inline-block; background: rgba(147, 51, 234, 0.25); color: #d8b4fe; font-size: 0.65rem; padding: 2px 6px; border-radius: 6px; margin-top: 2px; font-weight: 700; }
+
+    .selected-game-box { background: #0f172a; border: 1px solid #334155; border-radius: 14px; padding: 12px; margin-top: 12px; }
+    .score-section { margin-top: 12px; padding-top: 10px; border-top: 1px dashed #334155; display: none; }
+    .score-section.show { display: block; }
+
+    /* دکمه‌های عملیاتی */
+    button.action-btn { border: none; border-radius: 12px; padding: 13px 10px; font-weight: 800; cursor: pointer; color: #fff; font-size: 0.92rem; transition: 0.15s; width: 100%; }
     button.action-btn:active { transform: scale(0.97); }
-
     .btn-green { background: #10b981; }
-    .btn-gate-in { background: #2563eb; }
-    .btn-gate-out { background: #e11d48; }
-    .btn-game-win { background: #d97706; }
-    .btn-game-play { background: #475569; }
-    .btn-game-special { background: #9333ea; }
-    .btn-game-fee { background: #0ea5e9; margin-top: 5px; }
-    .btn-food { background: #059669; padding: 15px; font-size: 1rem; }
-    .btn-booth { background: #0284c7; }
-    .btn-clear { background: #e11d48; padding: 10px; font-size: 0.8rem; margin-top: 5px;}
+    .btn-blue { background: #0284c7; }
+    .btn-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 6px; }
+    .btn-score-5 { background: #475569; font-size: 0.82rem !important; padding: 10px 4px !important; }
+    .btn-score-10 { background: #d97706; font-size: 0.82rem !important; padding: 10px 4px !important; }
+    .btn-score-20 { background: #9333ea; font-size: 0.82rem !important; padding: 10px 4px !important; }
 
-    .status { text-align: center; font-size: 0.9rem; margin-top: 14px; padding: 10px; border-radius: 8px; font-weight: 600; min-height: 40px; }
-    .success { background: rgba(52, 211, 153, 0.15); color: #34d399; }
-    .error { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
-    .loading { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
-
-    .token-alert { display: none; background: #059669; color: white; padding: 20px; border-radius: 12px; text-align: center; margin-top: 15px; animation: popIn 0.3s ease; }
-    .token-number { font-size: 3rem; font-weight: 900; margin: 10px 0; }
-    @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
-
-    /* CSS منوی کافه */
-    .menu-search { background: #0b0f19; border: 1px solid #475569; padding: 10px; border-radius: 8px; color: white; width: 100%; margin-bottom: 15px; text-align: right;}
-    .menu-title { font-size: 1rem; color: #38bdf8; border-bottom: 1px dashed #334155; padding-bottom: 5px; margin: 15px 0 10px 0; font-weight: 800;}
-    .menu-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
-    .menu-box { background: #0b0f19; border: 2px solid #334155; border-radius: 12px; padding: 12px 5px; text-align: center; cursor: pointer; position: relative; transition: 0.2s; user-select: none; }
-    .menu-box.selected { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
-    .menu-emoji { font-size: 1.8rem; margin-bottom: 5px; }
-    .menu-name { font-size: 0.75rem; font-weight: 700; color: #e2e8f0; margin-bottom: 5px; }
-    .menu-price { font-size: 0.7rem; color: #94a3b8; }
-    .qty-badge { position: absolute; top: -8px; right: -8px; background: #e11d48; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(0,0,0,0.5);}
-    .total-calc { display: flex; justify-content: space-between; align-items: center; background: #0b0f19; padding: 15px; border-radius: 12px; border: 1px solid #38bdf8; margin: 15px 0; }
-    .total-label { font-weight: bold; color: #94a3b8; }
-    .total-value { font-size: 1.4rem; font-weight: 900; color: #38bdf8; }
+    .status { text-align: center; font-size: 0.88rem; margin-top: 12px; padding: 10px; border-radius: 10px; font-weight: 700; display: none; line-height: 1.5; }
+    .success { background: rgba(16, 185, 129, 0.18); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .error { background: rgba(244, 63, 94, 0.18); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .loading { background: rgba(251, 191, 36, 0.18); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
   </style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>🎪 پنل اپراتور و صندوق جشنواره</h2>
+  <div class="app-container">
+    <h2>🎪 پنل صندوق و سوله بازی</h2>
 
+    <!-- تب‌های اصلی -->
     <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('gate')">🚪 گیت</button>
-      <button class="tab-btn" onclick="switchTab('bank')">💳 صندوق</button>
-      <button class="tab-btn" onclick="switchTab('game')">🎮 بازی</button>
-      <button class="tab-btn" onclick="switchTab('food')">☕ کافه</button>
-      <button class="tab-btn" onclick="switchTab('booth')">🛍️ غرفه</button>
+      <button class="tab-btn active" onclick="switchTab('bank', this)">💳 صندوق (شارژ)</button>
+      <button class="tab-btn" onclick="switchTab('game', this)">🎮 سوله بازی</button>
     </div>
 
-    <!-- فیلد مشترک اسکنر -->
-    <div id="scanner-section">
-      <div id="reader"></div>
-      <label>کد شرکت‌کننده (کیف پول):</label>
-      <input id="userId" type="text" inputmode="numeric" oninput="formatPersianNumber(this)" placeholder="کد را اسکن یا تایپ کنید">
-    </div>
-
-    <!-- ۱. گیت -->
-    <div id="panel-gate" class="section-panel active">
-      <div class="btn-grid grid-2">
-        <button onclick="sendRequest('CHECK_IN', 'ورود به جشنواره', 0, null)" class="action-btn btn-gate-in">🟢 ثبت ورود</button>
-        <button onclick="sendRequest('CHECK_OUT', 'خروج از جشنواره', 0, null)" class="action-btn btn-gate-out">🔴 ثبت خروج</button>
+    <!-- اسکنر اختصاصی با کادر ثابت -->
+    <div class="scanner-box" id="scanner-box">
+      <div id="reader-video"></div>
+      <div class="camera-placeholder" id="camera-placeholder">
+        <div class="cam-icon">📷</div>
+        <button class="btn-start-cam" onclick="startCamera()">روشن کردن دوربین اسکنر</button>
+      </div>
+      <div class="scan-overlay" id="scan-overlay">
+        <div class="scan-badge" id="scan-badge-text">✅ اسکن شد</div>
       </div>
     </div>
 
-    <!-- ۲. صندوق -->
-    <div id="panel-bank" class="section-panel">
-      <div class="price-box">
-        <label>مبلغ پرداختی روی پوز (تومان):</label>
-        <input id="chargeAmount" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۵۰,۰۰۰">
-      </div>
-      <button onclick="sendRequest('BANK', 'شارژ حساب در صندوق', 0, 'chargeAmount')" class="action-btn btn-green">💳 افزایش موجودی کارت</button>
+    <div class="cam-controls" id="cam-controls">
+      <button class="btn-cam-ctrl" onclick="toggleCameraFacing()">🔄 تغییر دوربین</button>
+      <button class="btn-cam-ctrl btn-cam-stop" onclick="stopCamera()">⏹ خاموش کردن دوربین</button>
     </div>
 
-    <!-- ۳. سوله بازی -->
-    <div id="panel-game" class="section-panel">
-      <label>انتخاب بازی:</label>
-      <select id="gameDetail">
-        <option value="فیفا / فوتبال دیجیتال">فیفا / فوتبال دیجیتال</option>
-        <option value="بردگیم و فکری">بردگیم و بازی فکری</option>
-        <option value="چالش واقعیت مجازی VR">چالش واقعیت مجازی VR</option>
-      </select>
-      <div class="price-box">
-        <label>هزینه ورودی بازی (تومان):</label>
-        <input id="gameCost" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۱۵,۰۰۰">
-        <button onclick="sendRequest('GAME', document.getElementById('gameDetail').value + ' (ورود)', 0, 'gameCost')" class="action-btn btn-game-fee">💳 ثبت و کسر مبلغ (بدون امتیاز)</button>
-      </div>
-      <label style="margin-top: 15px;">ثبت امتیاز:</label>
-      <div class="btn-grid grid-3">
-        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (برد)', 10, null)" class="action-btn btn-game-win">+۱۰ برد</button>
-        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (شرکت)', 5, null)" class="action-btn btn-game-play">+۵ شرکت</button>
-        <button onclick="sendRequest('GAME_SCORE', document.getElementById('gameDetail').value + ' (ویژه)', 20, null)" class="action-btn btn-game-special">+۲۰ ویژه</button>
-      </div>
-    </div>
+    <label>کد شرکت‌کننده (اسکن یا تایپ):</label>
+    <input id="userId" type="text" inputmode="numeric" oninput="formatPersianNumber(this)" placeholder="مثلاً: ۱۰۱">
 
-    <!-- ۴. کافه (مدل Grid با انتخابگر) -->
-    <div id="panel-food" class="section-panel">
-      <div style="background: #1e293b; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-        <input type="text" id="menuSearch" class="menu-search" placeholder="🔍 جستجوی اقلام..." oninput="renderMenuUI()">
-        
-        <div class="menu-title">☕ منوی نوشیدنی و کافه</div>
-        <div id="grid-cafe" class="menu-grid"></div>
-
-        <div class="menu-title">🍔 منوی غذای گرم و رستوران</div>
-        <div id="grid-rest" class="menu-grid"></div>
-
-        <div class="total-calc">
-          <span class="total-label">مبلغ کل سفارش:</span>
-          <span class="total-value"><span id="liveTotal">۰</span> <small style="font-size:0.7rem;color:#94a3b8">تومان</small></span>
-        </div>
-
-        <button onclick="sendGridOrder()" class="action-btn btn-food">🧾 ثبت نهایی و چاپ در آشپزخانه</button>
-        <button onclick="clearOrder()" class="action-btn btn-clear">🗑️ پاک کردن سبد سفارش</button>
-      </div>
+    <!-- ۱. پنل صندوق -->
+    <div id="panel-bank" class="section-panel active">
+      <label>مبلغ پرداختی روی پوز (تومان):</label>
+      <input id="chargeAmount" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۱۰۰,۰۰۰">
       
-      <!-- نمایش شماره فیش به صندوق‌دار -->
-      <div id="token-alert" class="token-alert">
-        <div>سفارش با موفقیت ثبت شد</div>
-        <div id="token-display" class="token-number">-</div>
-        <div>به مشتری اعلام کنید!</div>
+      <div class="quick-amounts">
+        <button class="btn-quick" onclick="setQuickAmount(100000)">۱۰۰ هزار</button>
+        <button class="btn-quick" onclick="setQuickAmount(200000)">۲۰۰ هزار</button>
+        <button class="btn-quick" onclick="setQuickAmount(300000)">۳۰۰ هزار</button>
+        <button class="btn-quick" onclick="setQuickAmount(500000)">۵۰۰ هزار</button>
+      </div>
+
+      <button onclick="sendBankCharge()" class="action-btn btn-green">💳 شارژ و افزایش موجودی کارت</button>
+    </div>
+
+    <!-- ۲. پنل سوله بازی -->
+    <div id="panel-game" class="section-panel">
+      <div class="game-group-title">🎡 شهربازی ۱</div>
+      <div class="game-grid" id="grid-group-1"></div>
+
+      <div class="game-group-title">🕹️ سایر بازی‌ها و خدمات</div>
+      <div class="game-grid" id="grid-group-2"></div>
+
+      <div class="selected-game-box" id="selected-game-box">
+        <div style="text-align:center; color:#94a3b8; font-size:0.85rem;">یک بازی را از لیست بالا انتخاب کنید</div>
       </div>
     </div>
 
-    <!-- ۵. غرفه‌ها -->
-    <div id="panel-booth" class="section-panel">
-      <label>کالا یا نام غرفه:</label>
-      <input id="boothDetail" type="text" placeholder="مثلاً: خرید صنایع دستی غرفه ۱">
-      <div class="price-box">
-        <label>مبلغ خرید (تومان):</label>
-        <input id="boothCost" type="text" inputmode="numeric" oninput="formatCurrency(this)" placeholder="مثلاً: ۱۲۰,۰۰۰">
-      </div>
-      <button onclick="sendRequest('BOOTH', document.getElementById('boothDetail').value, 0, 'boothCost')" class="action-btn btn-booth">🛍️ پرداخت خرید غرفه</button>
-    </div>
-
-    <div id="status" class="status" style="display: none;"></div>
+    <div id="status" class="status"></div>
   </div>
 
   <script>
-    // 🔴 آدرس وب‌اپ گوگل اسکریپت خود را اینجا قرار دهید:
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwvXBXqgnx7Ee6zIjN3Kk4aXnAVqN1XSk_f5C2SHe90NL3jcc2QU3jk2tXV6e_gT0NC/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyBNC5rFJG7DeHx_Bldy6-xZUkzFalIAempsOuEMs_z56d1QJZOM-y04JxI9BF--0e1/exec";
 
-    // --- توابع کمکی فارسی‌سازی ---
+    // تعریف لیست دقیق بازی‌ها و خدمات
+    const gamesList = [
+      // شهربازی ۱
+      { id: 'g1', group: 1, name: 'مهد کودک', sub: 'نیم ساعت', price: 250000, hasScore: false, emoji: '🧸' },
+      { id: 'g2', group: 1, name: 'گیم نت', sub: '۲۰ دقیقه', price: 100000, hasScore: true, emoji: '🎮' },
+      { id: 'g3', group: 1, name: 'تورنومنت گیم نت', sub: 'ورودی مسابقه', price: 180000, hasScore: false, emoji: '🏆' },
+      // سایر بخش‌ها
+      { id: 'g4', group: 2, name: 'ایرهاکی', sub: 'هر دست', price: 90000, hasScore: true, emoji: '🏒' },
+      { id: 'g5', group: 2, name: 'تفنگ ژله‌ای', sub: '۲۰ تیر', price: 110000, hasScore: true, emoji: '🔫' },
+      { id: 'g6', group: 2, name: 'عینک VR', sub: 'واقعیت مجازی', price: 70000, hasScore: false, emoji: '🥽' },
+      { id: 'g7', group: 2, name: 'گریم صورت', sub: 'کودک و نوجوان', price: 210000, hasScore: false, emoji: '🎨' },
+      { id: 'g8', group: 2, name: 'عکاسی هوش مصنوعی', sub: 'تا ۵ فایل (خانواده)', price: 150000, hasScore: false, emoji: '📸' }
+    ];
+
+    let selectedGame = null;
+    let html5QrCode = null;
+    let isCameraRunning = false;
+    let currentFacing = "environment"; // دوربین پشت به صورت پیش‌فرض
+    let scanCooldown = false;
+    let audioCtx = null;
+
+    // توابع تبدیل اعداد
     const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-    function toPersianDigits(numStr) { return numStr.toString().replace(/\d/g, x => farsiDigits[x]); }
-    function toEnglishDigits(str) {
-      const persian = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
-      let res = str; for(let i=0; i<10; i++) res = res.replace(persian[i], i); return res;
+    function toPersian(val) { return val.toString().replace(/\d/g, x => farsiDigits[x]); }
+    function toEnglish(str) {
+      const p = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+      let r = str.toString(); for (let i = 0; i < 10; i++) r = r.replace(p[i], i); return r;
     }
     function formatCurrency(input) {
-      let val = toEnglishDigits(input.value).replace(/\D/g, '');
-      if (val) input.value = toPersianDigits(Number(val).toLocaleString('en-US'));
-      else input.value = '';
+      let val = toEnglish(input.value).replace(/\D/g, '');
+      input.value = val ? toPersian(Number(val).toLocaleString('en-US')) : '';
     }
-    function formatPersianNumber(input) { input.value = toPersianDigits(toEnglishDigits(input.value).replace(/\D/g, '')); }
+    function formatPersianNumber(input) {
+      input.value = toPersian(toEnglish(input.value).replace(/\D/g, ''));
+    }
+    function setQuickAmount(num) {
+      document.getElementById('chargeAmount').value = toPersian(num.toLocaleString('en-US'));
+    }
 
-    // --- منطق تب‌ها و اسکنر ---
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
-      event.target.classList.add('active');
-      document.getElementById('panel-' + tab).classList.add('active');
-      
-      // مخفی کردن اسکنر در تب کافه (مدل مستقل پوز)
-      if(tab === 'food') {
-        document.getElementById('scanner-section').style.display = 'none';
-        document.getElementById('status').style.display = 'none';
-        document.getElementById('token-alert').style.display = 'none';
-        renderMenuUI(); // رسم مجدد منو
-      } else {
-        document.getElementById('scanner-section').style.display = 'block';
+    // صدای بوق تایید بدون نیاز به فایل صوتی خارجی
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playBeep() {
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1100, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.18);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.18);
+      } catch (e) {}
+    }
+
+    // کنترل دوربین اختصاصی
+    async function startCamera() {
+      initAudio(); // آزاد کردن صدا در گوشی‌های آیفون و اندروید
+      document.getElementById('camera-placeholder').style.display = 'none';
+      if (!html5QrCode) html5QrCode = new Html5Qrcode("reader-video");
+
+      try {
+        await html5QrCode.start(
+          { facingMode: currentFacing },
+          { fps: 12, qrbox: { width: 170, height: 170 } },
+          onScanSuccess
+        );
+        isCameraRunning = true;
+        document.getElementById('cam-controls').classList.add('active');
+      } catch (err) {
+        document.getElementById('camera-placeholder').style.display = 'flex';
+        showStatus('❌ دسترسی به دوربین داده نشد یا مرورگر پشتیبانی نمی‌کند.', 'error');
+      }
+    }
+
+    async function stopCamera() {
+      if (html5QrCode && isCameraRunning) {
+        await html5QrCode.stop();
+        isCameraRunning = false;
+      }
+      document.getElementById('cam-controls').classList.remove('active');
+      document.getElementById('camera-placeholder').style.display = 'flex';
+    }
+
+    async function toggleCameraFacing() {
+      currentFacing = (currentFacing === "environment") ? "user" : "environment";
+      if (isCameraRunning) {
+        await stopCamera();
+        startCamera();
       }
     }
 
     function onScanSuccess(decodedText) {
-      document.getElementById('userId').value = toPersianDigits(decodedText);
-      showStatus('کد اسکن شد!', 'success');
-    }
-    try { var scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: { width: 220, height: 220 } }); scanner.render(onScanSuccess); } catch(e) {}
+      if (scanCooldown) return;
+      scanCooldown = true;
 
-    function showStatus(msg, type) {
-      let formattedMsg = msg.replace(/\d+/g, match => toPersianDigits(Number(match).toLocaleString('en-US')));
-      var s = document.getElementById('status');
-      s.style.display = 'block'; s.className = 'status ' + type; s.innerText = formattedMsg;
-    }
+      const cleanCode = toEnglish(decodedText).replace(/\D/g, '') || decodedText;
+      document.getElementById('userId').value = toPersian(cleanCode);
 
-    // ==========================================
-    // سیستم جدید منوی گرید (To-Do Style)
-    // ==========================================
-    const menuItems = [
-      { id: 'c1', type: 'cafe', name: 'اسپرسو', emoji: '☕', price: 35000 },
-      { id: 'c2', type: 'cafe', name: 'هات چاکلت', emoji: '🍫', price: 45000 },
-      { id: 'c3', type: 'cafe', name: 'چای لیوانی', emoji: '🍵', price: 15000 },
-      { id: 'c4', type: 'cafe', name: 'آبمیوه طبیعی', emoji: '🍹', price: 40000 },
-      { id: 'c5', type: 'cafe', name: 'کیک شکلاتی', emoji: '🍰', price: 30000 },
-      { id: 'c6', type: 'cafe', name: 'کیک هویج', emoji: '🥕', price: 25000 },
-      { id: 'r1', type: 'rest', name: 'اسنک گوشت', emoji: '🥪', price: 65000 },
-      { id: 'r2', type: 'rest', name: 'اسنک مرغ', emoji: '🌮', price: 55000 },
-      { id: 'r3', type: 'rest', name: 'سیب‌زمینی', emoji: '🍟', price: 40000 },
-      { id: 'r4', type: 'rest', name: 'پاستا', emoji: '🍝', price: 95000 }
-    ];
+      // پخش صدا، ویبره و افکت بصری
+      playBeep();
+      if (navigator.vibrate) navigator.vibrate(120);
 
-    let currentOrder = {}; // ساختار: { 'c1': 2, 'r2': 1 }
+      const box = document.getElementById('scanner-box');
+      const overlay = document.getElementById('scan-overlay');
+      document.getElementById('scan-badge-text').innerText = '✅ کد ' + toPersian(cleanCode) + ' اسکن شد';
+      
+      box.classList.add('scan-success-flash');
+      overlay.classList.add('show');
+      showStatus('✅ کد ' + cleanCode + ' شناسایی شد.', 'success');
 
-    function renderMenuUI() {
-      const searchTerm = document.getElementById('menuSearch').value.trim();
-      let cafeHTML = '';
-      let restHTML = '';
-      let totalAmount = 0;
+      setTimeout(() => {
+        box.classList.remove('scan-success-flash');
+        overlay.classList.remove('show');
+      }, 900);
 
-      menuItems.forEach(item => {
-        if(item.name.includes(searchTerm)) {
-          let qty = currentOrder[item.id] || 0;
-          let cssClass = qty > 0 ? 'menu-box selected' : 'menu-box';
-          let badgeHTML = qty > 0 ? `<div class="qty-badge">${toPersianDigits(qty)}</div>` : '';
-          
-          let html = `
-            <div class="${cssClass}" onclick="toggleItem('${item.id}')">
-              ${badgeHTML}
-              <div class="menu-emoji">${item.emoji}</div>
-              <div class="menu-name">${item.name}</div>
-              <div class="menu-price">${toPersianDigits(item.price.toLocaleString('en-US'))}</div>
-            </div>`;
-            
-          if(item.type === 'cafe') cafeHTML += html;
-          else restHTML += html;
-
-          totalAmount += qty * item.price;
-        }
-      });
-
-      document.getElementById('grid-cafe').innerHTML = cafeHTML;
-      document.getElementById('grid-rest').innerHTML = restHTML;
-      document.getElementById('liveTotal').innerText = toPersianDigits(totalAmount.toLocaleString('en-US'));
+      setTimeout(() => { scanCooldown = false; }, 2000);
     }
 
-    function toggleItem(id) {
-      // هر بار لمس روی آیتم، یک عدد به تعداد آن اضافه می‌کند
-      currentOrder[id] = (currentOrder[id] || 0) + 1;
-      renderMenuUI();
-    }
-
-    function clearOrder() {
-      currentOrder = {};
-      renderMenuUI();
-      document.getElementById('token-alert').style.display = 'none';
+    // سوییچ تب‌ها
+    function switchTab(tab, btnEl) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+      btnEl.classList.add('active');
+      document.getElementById('panel-' + tab).classList.add('active');
       document.getElementById('status').style.display = 'none';
     }
 
-    function sendGridOrder() {
-      let total = 0;
-      let orderParts = [];
+    // رندر لیست بازی‌ها
+    function renderGames() {
+      let g1 = '', g2 = '';
+      gamesList.forEach(g => {
+        const isSel = selectedGame && selectedGame.id === g.id ? 'selected' : '';
+        const scoreBadge = g.hasScore ? `<div class="score-tag">🏅 امتیازی</div>` : '';
+        const card = `
+          <div class="game-card ${isSel}" onclick="selectGame('${g.id}')">
+            <div>
+              <div class="game-title">${g.emoji} ${g.name}</div>
+              <div class="game-sub">${g.sub}</div>
+              ${scoreBadge}
+            </div>
+            <div class="game-price">${toPersian(g.price.toLocaleString('en-US'))} تومان</div>
+          </div>`;
+        if (g.group === 1) g1 += card; else g2 += card;
+      });
+      document.getElementById('grid-group-1').innerHTML = g1;
+      document.getElementById('grid-group-2').innerHTML = g2;
+    }
 
-      for (let id in currentOrder) {
-        let qty = currentOrder[id];
-        let item = menuItems.find(m => m.id === id);
-        total += qty * item.price;
-        orderParts.push(`${toPersianDigits(qty)} عدد ${item.name}`);
-      }
-
-      if (orderParts.length === 0) {
-        showStatus('هیچ آیتمی انتخاب نشده است!', 'error');
-        return;
-      }
-
-      // تولید متن تمیز برای مانیتور آشپزخانه
-      let detailString = orderParts.join('، ') + ` (مجموع: ${toPersianDigits(total.toLocaleString('en-US'))} تومان)`;
-
-      document.getElementById('token-alert').style.display = 'none';
-      showStatus('در حال ارسال فیش به آشپزخانه...', 'loading');
-
-      var finalUrl = SCRIPT_URL + '?action=cafe_order&detail=' + encodeURIComponent(detailString) + '&callback=processCafeResponse&t=' + Date.now();
+    function selectGame(id) {
+      selectedGame = gamesList.find(g => g.id === id);
+      renderGames();
+      const box = document.getElementById('selected-game-box');
+      const priceFa = toPersian(selectedGame.price.toLocaleString('en-US'));
       
-      var old = document.getElementById('cafe-script');
+      let scoreHTML = '';
+      if (selectedGame.hasScore) {
+        scoreHTML = `
+          <div class="score-section show">
+            <label style="text-align:center;">🏅 ثبت امتیاز برای ${selectedGame.name}:</label>
+            <div class="btn-grid-3">
+              <button onclick="sendGameScore(5, 'شرکت')" class="action-btn btn-score-5">+۵ شرکت</button>
+              <button onclick="sendGameScore(10, 'برد')" class="action-btn btn-score-10">+۱۰ برد</button>
+              <button onclick="sendGameScore(20, 'ویژه')" class="action-btn btn-score-20">+۲۰ ویژه</button>
+            </div>
+          </div>`;
+      }
+
+      box.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <span style="font-weight:800; color:#f1f5f9;">${selectedGame.emoji} ${selectedGame.name}</span>
+          <span style="font-weight:900; color:#fbbf24;">${priceFa} تومان</span>
+        </div>
+        <button onclick="sendGamePayment()" class="action-btn btn-blue">💳 کسر ${priceFa} تومان از اعتبار</button>
+        ${scoreHTML}
+      `;
+    }
+
+    function showStatus(msg, type) {
+      let formattedMsg = msg.replace(/\d+/g, m => toPersian(Number(m).toLocaleString('en-US')));
+      const s = document.getElementById('status');
+      s.style.display = 'block';
+      s.className = 'status ' + type;
+      s.innerText = formattedMsg;
+    }
+
+    function getUserId() {
+      const uid = toEnglish(document.getElementById('userId').value).replace(/\D/g, '');
+      if (!uid) { showStatus('لطفاً ابتدا کد شرکت‌کننده را اسکن یا وارد کنید!', 'error'); return null; }
+      return uid;
+    }
+
+    function sendBankCharge() {
+      const uid = getUserId(); if (!uid) return;
+      const raw = toEnglish(document.getElementById('chargeAmount').value).replace(/\D/g, '');
+      const amount = Number(raw);
+      if (!amount || amount <= 0) { showStatus('لطفاً مبلغ شارژ را وارد کنید!', 'error'); return; }
+      dispatchRequest(uid, 'BANK', 'شارژ حساب در صندوق', 0, amount);
+    }
+
+    function sendGamePayment() {
+      const uid = getUserId(); if (!uid || !selectedGame) return;
+      dispatchRequest(uid, 'GAME', selectedGame.name + ' (' + selectedGame.sub + ')', 0, -selectedGame.price);
+    }
+
+    function sendGameScore(points, label) {
+      const uid = getUserId(); if (!uid || !selectedGame) return;
+      dispatchRequest(uid, 'GAME_SCORE', selectedGame.name + ' (' + label + ')', points, 0);
+    }
+
+    function dispatchRequest(uid, type, detail, scoreChange, creditChange) {
+      showStatus('در حال ارتباط با سرور...', 'loading');
+      const finalUrl = SCRIPT_URL +
+        '?userId=' + encodeURIComponent(uid) +
+        '&type=' + encodeURIComponent(type) +
+        '&detail=' + encodeURIComponent(detail) +
+        '&scoreChange=' + encodeURIComponent(scoreChange) +
+        '&creditChange=' + encodeURIComponent(creditChange) +
+        '&callback=processResponse&t=' + Date.now();
+
+      const old = document.getElementById('action-script');
       if (old) old.remove();
-      var s = document.createElement('script');
-      s.id = 'cafe-script'; 
+      const s = document.createElement('script');
+      s.id = 'action-script';
       s.src = finalUrl;
       document.body.appendChild(s);
     }
 
-    window.processCafeResponse = function(res) {
-      document.getElementById('status').style.display = 'none';
-      var tokenAlert = document.getElementById('token-alert');
-      tokenAlert.style.display = 'block';
-      document.getElementById('token-display').innerText = toPersianDigits(res.orderNum);
-      
-      // سبد خرید را برای مشتری بعدی خالی می‌کند
-      currentOrder = {};
-      renderMenuUI();
-    };
-
-    // ==========================================
-    // توابع تراکنش‌های عادی (کیف پول و بازی)
-    // ==========================================
-    function sendRequest(type, detail, scoreChange, costInputId) {
-      var uidStr = document.getElementById('userId').value;
-      var uid = toEnglishDigits(uidStr);
-      if (!uid) { showStatus('لطفاً کد شرکت‌کننده را وارد کنید!', 'error'); return; }
-
-      var creditChange = 0;
-      if (costInputId) {
-        var rawVal = document.getElementById(costInputId).value;
-        var amount = Number(toEnglishDigits(rawVal).replace(/\D/g, ''));
-        if (rawVal !== "" && (isNaN(amount) || amount <= 0)) { showStatus('مبلغ نامعتبر است!', 'error'); return; }
-        if (rawVal !== "") creditChange = (type === 'BANK') ? amount : -amount;
-      }
-
-      showStatus('در حال ثبت...', 'loading');
-      var finalUrl = SCRIPT_URL + '?userId=' + encodeURIComponent(uid) + '&type=' + encodeURIComponent(type) + '&detail=' + encodeURIComponent(detail) + '&scoreChange=' + encodeURIComponent(scoreChange) + '&creditChange=' + encodeURIComponent(creditChange) + '&callback=processResponse&t=' + Date.now();
-      
-      var old = document.getElementById('action-script');
-      if (old) old.remove();
-      var s = document.createElement('script');
-      s.id = 'action-script'; s.src = finalUrl;
-      document.body.appendChild(s);
-    }
-
     window.processResponse = function(res) {
-      if (res.status === 'ERROR') showStatus(res.message, 'error');
-      else {
+      if (res.status === 'ERROR') {
+        showStatus(res.message, 'error');
+      } else {
+        playBeep();
         showStatus(res.message, 'success');
         document.getElementById('chargeAmount').value = '';
-        document.getElementById('gameCost').value = '';
-        document.getElementById('boothCost').value = '';
       }
     };
+
+    renderGames();
   </script>
 </body>
 </html>
